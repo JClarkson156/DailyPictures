@@ -231,7 +231,7 @@ namespace OneDriveDaily
                 //window.Close();
                 //window = null;
                 //index = this.Frank.SelectedIndex;
-                var localIndex = index;
+                //var localIndex = index;
                 m_arrFiles.Remove(item);
                 OnPropertyChanged(nameof(m_arrFiles));
 
@@ -239,14 +239,19 @@ namespace OneDriveDaily
                 //{
                     //Thread.Sleep(1000);
 
-                    //File.Delete(temp);
+                    File.Delete(temp);
                 //});
 
-                index = localIndex;
+                //index = localIndex;
                 //this.Test.SelectedIndex = localIndex;
                 //this.Test.SelectedItem = Frank.Items[localIndex];
+                //item2 = this.m_arrFiles[index].ImageUri;
+                //item = (TestyTest)Test.Items[localIndex];
+
+                item = m_arrFiles[index];
+                name = item.ImageUri;
+                this.Test.SelectedItem = item;
                 item2 = this.m_arrFiles[index].ImageUri;
-                item = (TestyTest)Test.Items[localIndex];
             }
             else if (e.Key == Key.Left)
             {
