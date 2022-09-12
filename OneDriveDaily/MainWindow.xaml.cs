@@ -74,7 +74,6 @@ namespace OneDriveDaily
         //public List<string> m_arrFiles;
         private string[] Paths = new string[5] { ".bmp", ".jpg", ".jpeg", ".png", ".jfif" };
 
-
         public static DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(TestyTest), typeof(MainWindow));
         public TestyTest item
         {
@@ -102,8 +101,6 @@ namespace OneDriveDaily
             get { return (int)GetValue(ListProperty2); }
             set { this.SetValue(ListProperty2, value); }
         }
-
-
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -139,17 +136,10 @@ namespace OneDriveDaily
             }
 
             var arrFolders = strFolders.Split(',');
-
             foreach (var item in arrFolders)
             {
                 arrFiles.AddRange(CountFiles(new DirectoryInfo(item.Trim()).GetFileSystemInfos()));
             }
-
-            //FileSystemInfo[] infos = new DirectoryInfo("C:\\Users\\James\\OneDrive\\SkyDrive camera roll").GetFileSystemInfos();
-            //arrFiles.AddRange(CountFiles(infos));
-
-            //FileSystemInfo[] infos2 = new DirectoryInfo("C:\\Users\\James\\OneDrive\\Pictures\\Pictures").GetFileSystemInfos();
-            //arrFiles.AddRange(CountFiles(infos2));
 
             m_arrFiles = new ObservableCollection<TestyTest>();
             arrFiles = arrFiles.OrderBy(c => System.IO.Path.GetFileNameWithoutExtension(c.Name)).ToList();
@@ -158,10 +148,6 @@ namespace OneDriveDaily
             {
                 m_arrFiles.Add(new TestyTest(item));
             }
-
-            //m_arrFiles = new ObservableCollection<string>(arrFiles.OrderBy(System.IO.Path.GetFileNameWithoutExtension).ToList());
-
-            //Frank.ItemsSource = m_arrFiles;
         }
         private List<TestyTest2> CountFiles(FileSystemInfo[] infos)
         {
@@ -191,29 +177,26 @@ namespace OneDriveDaily
         {
             index = this.Test.SelectedIndex == -1 ? 0 : this.Test.SelectedIndex;
             LastIndex = index;
-            //this.Frank.SelectedIndex = index;
-            //this.Frank.SelectedItem = Frank.Items[index];
-            //item = (TestyTest)Frank.Items[index];
+            item = (TestyTest)Test.Items[index];
             item2 = this.m_arrFiles[index].ImageUri;
 
             if (window == null || window.isClosed)
             {
-                //window = new Window1(item.ImageUri);
                 window = new Window1(item2);
                 window.Show();
             }
             else
             {
-                //window.Update(item.ImageUri);
                 window.Update(item2);
                 window.Show();
             }
         }
+
         int LastIndex = 0;
+
         private void Image_KeyDown(object sender, KeyEventArgs e)
         {
             var name = "";
-
 
             if (e.Key == Key.Enter)
             {
@@ -228,44 +211,27 @@ namespace OneDriveDaily
             {
                 var temp = item.ImageUri;
 
-                //window.Close();
-                //window = null;
-                //index = this.Frank.SelectedIndex;
-                //var localIndex = index;
                 m_arrFiles.Remove(item);
                 OnPropertyChanged(nameof(m_arrFiles));
 
-                //Task.Run(() =>
-                //{
-                    //Thread.Sleep(1000);
+                File.Delete(temp);
 
-                    File.Delete(temp);
-                //});
-
-                //index = localIndex;
-                //this.Test.SelectedIndex = localIndex;
-                //this.Test.SelectedItem = Frank.Items[localIndex];
-                //item2 = this.m_arrFiles[index].ImageUri;
-                //item = (TestyTest)Test.Items[localIndex];
-
-                item = m_arrFiles[index];
+                item = index < m_arrFiles.Count ? m_arrFiles[index] : m_arrFiles[m_arrFiles.Count - 1];
                 name = item.ImageUri;
                 this.Test.SelectedItem = item;
-                item2 = this.m_arrFiles[index].ImageUri;
+                item2 = index < m_arrFiles.Count ? this.m_arrFiles[index].ImageUri : m_arrFiles[m_arrFiles.Count - 1].ImageUri;
             }
             else if (e.Key == Key.Left)
             {
                 if (index == 0) { }
                 else
                 {
-                    if (Math.Abs(index - LastIndex) > 1) index = LastIndex;
+                    if (Math.Abs(index - LastIndex) > 1) 
+                        index = LastIndex;
         
-
                     index--;
                     item = m_arrFiles[index];
                     name = item.ImageUri;
-                    //Test.SelectedValue = item.ImageUri;
-                    //this.Frank.SelectedIndex = index;
                     this.Test.SelectedItem = item;
                     item2 = this.m_arrFiles[index].ImageUri;
                     Test.ScrollIntoView(item);
@@ -276,14 +242,12 @@ namespace OneDriveDaily
                 if (index == this.Test.Items.Count - 1) { }
                 else
                 {
-                    if (Math.Abs(index - LastIndex) > 1) index = LastIndex;
-
+                    if (Math.Abs(index - LastIndex) > 1) 
+                        index = LastIndex;
 
                     index++;
                     item = m_arrFiles[index];
                     name = item.ImageUri;
-                    //this.Frank.SelectedIndex = index;
-                    //Frank.SelectedValue = item.ImageUri;
                     this.Test.SelectedItem = item;
                     item2 = this.m_arrFiles[index].ImageUri;
                     Test.ScrollIntoView(item);
@@ -294,14 +258,12 @@ namespace OneDriveDaily
                 if (index <= 3) { }
                 else
                 {
-                    if (Math.Abs(index - LastIndex) > 4) index = LastIndex;
-
+                    if (Math.Abs(index - LastIndex) > 4) 
+                        index = LastIndex;
 
                     index -= 4;
                     item = m_arrFiles[index];
                     name = item.ImageUri;
-                    //this.Test.SelectedIndex = index;
-                    //Test.SelectedValue = item.ImageUri;
                     item2 = this.m_arrFiles[index].ImageUri;
                     this.Test.SelectedItem = item;
                     Test.ScrollIntoView(item);
@@ -312,13 +274,12 @@ namespace OneDriveDaily
                 if (index >= this.Test.Items.Count - 5) { }
                 else
                 {
-                    if (Math.Abs(index - LastIndex) > 4) index = LastIndex;
+                    if (Math.Abs(index - LastIndex) > 4) 
+                        index = LastIndex;
 
                     index += 4;
                     item = m_arrFiles[index];
                     name = item.ImageUri;
-                    //this.Test.SelectedIndex = index;
-                    //Test.SelectedValue = item.ImageUri;
                     this.Test.SelectedItem = item;
                     item2 = this.m_arrFiles[index].ImageUri;
                     Test.ScrollIntoView(item);
@@ -341,37 +302,6 @@ namespace OneDriveDaily
 
             LastIndex = index;
             e.Handled = true;
-        }
-
-        private void Frank_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            /*index = this.Frank.SelectedIndex;
-            if (window == null)
-            {
-                if (e.AddedItems.Count > 0)
-                {
-                    window = new Window1(((TestyTest)(e.AddedItems[0])).ImageUri);
-                    window.Show();
-                }
-            }
-            else
-            {
-                if (window.isClosed)
-                {
-                    window = new Window1(((TestyTest)(e.AddedItems[0])).ImageUri);
-                    window.Show();
-                }
-                else
-                {
-                    if (e.AddedItems.Count > 0)
-                    {
-                        window.Update(((TestyTest)(e.AddedItems[0])).ImageUri);
-                        window.Show();
-                    }
-                }
-            }
-
-            window?.UpdateLayout();*/
         }
     }
 }
