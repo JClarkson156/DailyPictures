@@ -16,11 +16,10 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using MetadataExtractor;
-using MetadataExtractor.Formats.Exif;
 using System.Diagnostics;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
+using System.Windows.Interop;
 
 namespace OneDriveDaily
 {
@@ -72,7 +71,7 @@ namespace OneDriveDaily
         }
 
         //public List<string> m_arrFiles;
-        private string[] Paths = new string[5] { ".bmp", ".jpg", ".jpeg", ".png", ".jfif" };
+        private string[] Paths = new string[6] { ".bmp", ".jpg", ".jpeg", ".png", ".jfif", ".webp" };
 
         public static DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(TestyTest), typeof(MainWindow));
         public TestyTest item
@@ -112,7 +111,6 @@ namespace OneDriveDaily
         }
 
         public Window1 window = null;
-
         private void ChooseFiles()
         {
             var arrFiles = new List<TestyTest2>();
@@ -162,15 +160,59 @@ namespace OneDriveDaily
                 {
                     if (Paths.Contains((((FileInfo)infos[i]).Extension).ToLower()))
                     {
-                        var date = infos[i].LastWriteTime;
+                        var date = infos[i].CreationTime;
+                        var date2 = infos[i].LastWriteTime;
                         var today = DateTime.Today;
 
+                        var fileAdded = false;
+
+                        /*using (var stream = new FileStream(infos[i].FullName, FileMode.Open))
+                        {
+                            stream.Seek(0, SeekOrigin.Begin);
+                            var baseImage = System.Drawing.Image.FromStream(stream, false, false);
+
+                            var index = Array.FindIndex(baseImage.PropertyIdList, 0, EndsWithSaurus);
+                            if (index != -1)
+                            {
+                                var property = baseImage.PropertyItems[index];
+                                if (property != null && property.Value != null && property.Value.Length == 6)
+                                {
+                                    var data = System.Text.Encoding.ASCII.GetString(property.Value).Split(':', ' ');
+                                    var month = Int32.Parse(data[1]);
+                                    var day = Int32.Parse(data[2]);
+                                    if (day == date.Day && month == date.Month)
+                                    {
+                                        files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
+                                        fileAdded = true;
+                                    }
+                                }
+                            }
+                            baseImage.Dispose();
+                        }*/
+
+                        //var test2 = System.Drawing.Image.FromFile(infos[i].FullName, false);
+
+                        //DateTime test3;
+                        //var result = DateTime.TryParse((test.Metadata as BitmapMetadata).DateTaken, out test3);
+
+                        //if (result && test3.Day == date.Day && test3.Month == date.Month)
+                        //  files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
+                        //else 
                         if (today.Day == date.Day && today.Month == date.Month)
+                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
+                        else if(today.Day == date2.Day && today.Month == date2.Month)
                             files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
                     }
                 }
             }
             return files;
+        }
+
+        private static bool EndsWithSaurus(int num)
+        {
+            if (num == 36867)
+                return true;
+            return false;
         }
 
         private void Frank_MouseDown(object sender, MouseButtonEventArgs e)
