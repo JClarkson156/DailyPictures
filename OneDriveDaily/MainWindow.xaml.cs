@@ -52,9 +52,9 @@ namespace OneDriveDaily
 
     public class TestyTest2
     {
-        public string Name { get; set; }
-        public string Resolution { get; set; }
-        public long Size { get; set; }
+        public string Name { get; set; } = "";
+        public string Resolution { get; set; } = "";
+        public long Size { get; set; } = 0;
     }
 
     public partial class MainWindow : Window, INotifyPropertyChanged
@@ -111,6 +111,9 @@ namespace OneDriveDaily
         }
 
         public Window1 window = null;
+        public int m_arrPages = 1;
+        public int m_curPage = 0;
+        private List<TestyTest2> m_arrFiles2 = null;
         private void ChooseFiles()
         {
             var arrFiles = new List<TestyTest2>();
@@ -142,11 +145,19 @@ namespace OneDriveDaily
             m_arrFiles = new ObservableCollection<TestyTest>();
             arrFiles = arrFiles.OrderBy(c => System.IO.Path.GetFileNameWithoutExtension(c.Name)).ToList();
 
+            m_arrFiles2 = arrFiles;
+
+            m_arrPages = (int)Math.Ceiling(arrFiles.Count / 500m);
+
             foreach (var item in arrFiles)
             {
                 m_arrFiles.Add(new TestyTest(item));
+
+                if (m_arrFiles.Count == 500)
+                    break;
             }
         }
+
         private List<TestyTest2> CountFiles(FileSystemInfo[] infos)
         {
             List<TestyTest2> files = new List<TestyTest2>();
@@ -164,7 +175,7 @@ namespace OneDriveDaily
                         var date2 = infos[i].LastWriteTime;
                         var today = DateTime.Today;
 
-                        var fileAdded = false;
+                        //var fileAdded = false;
 
                         /*using (var stream = new FileStream(infos[i].FullName, FileMode.Open))
                         {
@@ -268,9 +279,9 @@ namespace OneDriveDaily
                 if (index == 0) { }
                 else
                 {
-                    if (Math.Abs(index - LastIndex) > 1) 
+                    if (Math.Abs(index - LastIndex) > 1)
                         index = LastIndex;
-        
+
                     index--;
                     item = m_arrFiles[index];
                     name = item.ImageUri;
@@ -284,7 +295,7 @@ namespace OneDriveDaily
                 if (index == this.Test.Items.Count - 1) { }
                 else
                 {
-                    if (Math.Abs(index - LastIndex) > 1) 
+                    if (Math.Abs(index - LastIndex) > 1)
                         index = LastIndex;
 
                     index++;
@@ -300,7 +311,7 @@ namespace OneDriveDaily
                 if (index <= 3) { }
                 else
                 {
-                    if (Math.Abs(index - LastIndex) > 4) 
+                    if (Math.Abs(index - LastIndex) > 4)
                         index = LastIndex;
 
                     index -= 4;
@@ -316,7 +327,7 @@ namespace OneDriveDaily
                 if (index >= this.Test.Items.Count - 5) { }
                 else
                 {
-                    if (Math.Abs(index - LastIndex) > 4) 
+                    if (Math.Abs(index - LastIndex) > 4)
                         index = LastIndex;
 
                     index += 4;
@@ -326,6 +337,10 @@ namespace OneDriveDaily
                     item2 = this.m_arrFiles[index].ImageUri;
                     Test.ScrollIntoView(item);
                 }
+            }
+            else if (e.Key == Key.F3)
+            {
+                File.Copy(item.ImageUri, "C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background.jpg", true);
             }
 
             if (name.Length > 0)
@@ -344,6 +359,56 @@ namespace OneDriveDaily
 
             LastIndex = index;
             e.Handled = true;
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            TestyTest item = null;
+            if (m_curPage > 0)
+            {
+                m_curPage--;
+                m_arrFiles = new ObservableCollection<TestyTest>();
+                for (int i = m_curPage * 500; i < m_arrFiles2.Count; i++)
+                {
+                    item = null;
+                    try
+                    {
+                        item = new TestyTest(m_arrFiles2[i]);
+                    }
+                    catch { }
+                    if (item != null)
+                        m_arrFiles.Add(item);
+
+                    if (m_arrFiles.Count == 500)
+                        break;
+                }
+                OnPropertyChanged(nameof(m_arrFiles));
+            }
+        }
+
+        private void Next_Click(object sender, RoutedEventArgs e)
+        {
+            TestyTest item = null;
+            if (m_curPage < m_arrPages)
+            {
+                m_curPage++;
+                m_arrFiles = new ObservableCollection<TestyTest>();
+                for (int i = m_curPage * 500; i < m_arrFiles2.Count; i++)
+                {
+                    item = null;
+                    try
+                    {
+                        item = new TestyTest(m_arrFiles2[i]);
+                    }
+                    catch { }
+                    if (item != null)
+                        m_arrFiles.Add(item);
+
+                    if (m_arrFiles.Count == 500)
+                        break;
+                }
+                OnPropertyChanged(nameof(m_arrFiles));
+            }
         }
     }
 }

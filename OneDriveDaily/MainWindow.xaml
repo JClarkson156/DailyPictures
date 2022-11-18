@@ -8,7 +8,11 @@
         WindowState="Maximized"
         Title="MainWindow" Height="900" Width="1440">
     <Grid>
-        <ListView ItemsSource="{Binding m_arrFiles, UpdateSourceTrigger=PropertyChanged}" PreviewKeyDown="Image_KeyDown"    MaxWidth="1400"  Name="Test">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="850" />
+            <RowDefinition Height="50" />
+        </Grid.RowDefinitions>
+        <ListView Grid.Row="0" ItemsSource="{Binding m_arrFiles, UpdateSourceTrigger=PropertyChanged}" PreviewKeyDown="Image_KeyDown"    MaxWidth="1400"  Name="Test">
             <ListView.ItemsPanel>
                 <ItemsPanelTemplate>
                     <WrapPanel MaxWidth="1440" Margin="10" Width="1350" />
@@ -29,5 +33,9 @@
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
+        <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Row="1" Orientation="Horizontal">
+            <Button Width="50" Height="30" Name="Previous" Click="Button_Click">Previous</Button>
+            <Button Width="50" Height="30" Name="Next" Click="Next_Click">Next</Button>
+        </StackPanel>
     </Grid>
 </Window>
