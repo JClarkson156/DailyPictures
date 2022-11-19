@@ -36,6 +36,11 @@
         <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Row="1" Orientation="Horizontal">
             <Button Width="50" Height="30" Name="Previous" Click="Button_Click">Previous</Button>
             <Button Width="50" Height="30" Name="Next" Click="Next_Click">Next</Button>
+
+            <TextBlock Text="{Binding m_curPage}"/>
+            <TextBlock Text=" out of "/>
+            <TextBlock Text="{Binding m_arrPages}"/>
+
         </StackPanel>
     </Grid>
 </Window>
