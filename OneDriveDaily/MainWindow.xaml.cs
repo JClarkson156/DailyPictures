@@ -76,6 +76,8 @@ namespace OneDriveDaily
         //public List<string> m_arrFiles;
         private string[] Paths = new string[6] { ".bmp", ".jpg", ".jpeg", ".png", ".jfif", ".webp" };
 
+        private decimal maxAmount = 255;
+
         public static DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(TestyTest), typeof(MainWindow));
         public TestyTest item
         {
@@ -164,13 +166,13 @@ namespace OneDriveDaily
 
             m_arrFiles2 = arrFiles;
 
-            m_arrPages = (int)Math.Ceiling(arrFiles.Count / 500m);
+            m_arrPages = (int)Math.Ceiling(arrFiles.Count / maxAmount);
 
             foreach (var item in arrFiles)
             {
                 m_arrFiles.Add(new TestyTest(item));
 
-                if (m_arrFiles.Count == 500)
+                if (m_arrFiles.Count == maxAmount)
                     break;
             }
         }
@@ -233,7 +235,7 @@ namespace OneDriveDaily
                         }
                         else
                         {
-                            if (today.Day == dateEdited.Day && today.Month == dateEdited.Month && dateEdited.Year > dateCreated.Year)
+                            if (today.Day == dateEdited.Day && today.Month == dateEdited.Month)
                                 files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
                             else if (today.Day == dateCreated.Day && today.Month == dateCreated.Month)
                                 files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
@@ -299,6 +301,8 @@ namespace OneDriveDaily
                 var temp = item.ImageUri;
 
                 m_arrFiles.Remove(item);
+                m_arrFiles2.RemoveAt(m_arrFiles2.FindIndex(m_curPage0 * (int)maxAmount, (int)maxAmount, r => r.Name == item.ImageUri));
+                m_arrFiles.Add(new TestyTest(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1]));
                 OnPropertyChanged(nameof(m_arrFiles));
 
                 File.Delete(temp);
@@ -403,7 +407,7 @@ namespace OneDriveDaily
                 m_curPage--;
                 m_curPage0--;
                 m_arrFiles = new ObservableCollection<TestyTest>();
-                for (int i = m_curPage0 * 500; i < m_arrFiles2.Count; i++)
+                for (int i = m_curPage0 * (int)maxAmount; i < m_arrFiles2.Count; i++)
                 {
                     item = null;
                     try
@@ -414,10 +418,11 @@ namespace OneDriveDaily
                     if (item != null)
                         m_arrFiles.Add(item);
 
-                    if (m_arrFiles.Count == 500)
+                    if (m_arrFiles.Count == (int)maxAmount)
                         break;
                 }
                 OnPropertyChanged(nameof(m_arrFiles));
+                OnPropertyChanged(nameof(m_curPage));
             }
         }
 
@@ -429,7 +434,7 @@ namespace OneDriveDaily
                 m_curPage++;
                 m_curPage0++;
                 m_arrFiles = new ObservableCollection<TestyTest>();
-                for (int i = m_curPage0 * 500; i < m_arrFiles2.Count; i++)
+                for (int i = m_curPage0 * (int)maxAmount; i < m_arrFiles2.Count; i++)
                 {
                     item = null;
                     try
@@ -440,10 +445,11 @@ namespace OneDriveDaily
                     if (item != null)
                         m_arrFiles.Add(item);
 
-                    if (m_arrFiles.Count == 500)
+                    if (m_arrFiles.Count == maxAmount)
                         break;
                 }
                 OnPropertyChanged(nameof(m_arrFiles));
+                OnPropertyChanged(nameof(m_curPage));
             }
         }
     }
