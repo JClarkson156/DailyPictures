@@ -301,9 +301,13 @@ namespace OneDriveDaily
                 var temp = item.ImageUri;
 
                 m_arrFiles.Remove(item);
-                m_arrFiles2.RemoveAt(m_arrFiles2.FindIndex(m_curPage0 * (int)maxAmount, (int)maxAmount, r => r.Name == item.ImageUri));
-                m_arrFiles.Add(new TestyTest(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1]));
+                m_arrFiles2.RemoveAt(m_arrFiles2.FindIndex(m_curPage0 * (int)maxAmount, r => r.Name == item.ImageUri));
+                if (m_arrFiles2.Count >= (m_curPage0 * (int)maxAmount) + (int)maxAmount)
+                    m_arrFiles.Add(new TestyTest(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1]));
+                m_arrPages = (int)Math.Ceiling(m_arrFiles2.Count / maxAmount);
+
                 OnPropertyChanged(nameof(m_arrFiles));
+                OnPropertyChanged(nameof(m_arrPages));
 
                 File.Delete(temp);
 
