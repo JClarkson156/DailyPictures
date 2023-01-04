@@ -67,6 +67,7 @@ namespace OneDriveDaily
 
             index = 0;
             m_arrPages = 1;
+            m_totalPages = 1;
             m_curPage = 1;
             m_curPage0 = 0;
 
@@ -122,6 +123,15 @@ namespace OneDriveDaily
             set { this.SetValue(ListProperty4, value); }
         }
 
+        public static DependencyProperty ListProperty5 = DependencyProperty.Register("Text9", typeof(int), typeof(MainWindow));
+
+        public int totalPictures;
+        public int m_totalPages
+        {
+            get { return (int)GetValue(ListProperty5); }
+            set { this.SetValue(ListProperty5, value); }
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void OnPropertyChanged(string propertyName)
@@ -167,6 +177,7 @@ namespace OneDriveDaily
             m_arrFiles2 = arrFiles;
 
             m_arrPages = (int)Math.Ceiling(arrFiles.Count / maxAmount);
+            m_totalPages = arrFiles.Count;
 
             foreach (var item in arrFiles)
             {
@@ -228,18 +239,18 @@ namespace OneDriveDaily
                         //if (result && test3.Day == date.Day && test3.Month == date.Month)
                         //  files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
                         //else 
-                        if (dateCreated > dateEdited)
-                        {
-                            if (today.Day == dateEdited.Day && today.Month == dateEdited.Month)
-                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
-                        }
-                        else
-                        {
+                        //if (dateCreated > dateEdited)
+                        //{
+                            //if (today.Day == dateEdited.Day && today.Month == dateEdited.Month)
+                                //files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
+                        //}
+                        //else
+                        //{
                             if (today.Day == dateEdited.Day && today.Month == dateEdited.Month)
                                 files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
                             else if (today.Day == dateCreated.Day && today.Month == dateCreated.Month)
                                 files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
-                        }
+                        //}
 
                         if (today.Month == 2 && today.Day == 29)
                         {
@@ -305,9 +316,11 @@ namespace OneDriveDaily
                 if (m_arrFiles2.Count >= (m_curPage0 * (int)maxAmount) + (int)maxAmount)
                     m_arrFiles.Add(new TestyTest(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1]));
                 m_arrPages = (int)Math.Ceiling(m_arrFiles2.Count / maxAmount);
+                m_totalPages = m_arrFiles2.Count;
 
                 OnPropertyChanged(nameof(m_arrFiles));
                 OnPropertyChanged(nameof(m_arrPages));
+                OnPropertyChanged(nameof(m_totalPages));
 
                 File.Delete(temp);
 

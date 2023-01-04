@@ -40,6 +40,9 @@
             <TextBlock Text="{Binding m_curPage}"/>
             <TextBlock Text=" out of "/>
             <TextBlock Text="{Binding m_arrPages}"/>
+            <TextBlock Text=" for "/>
+            <TextBlock Text="{Binding m_totalPages}"/>
+            <TextBlock Text=" images "/>
 
         </StackPanel>
     </Grid>
