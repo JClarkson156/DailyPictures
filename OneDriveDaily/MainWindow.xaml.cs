@@ -77,7 +77,7 @@ namespace OneDriveDaily
         //public List<string> m_arrFiles;
         private string[] Paths = new string[6] { ".bmp", ".jpg", ".jpeg", ".png", ".jfif", ".webp" };
 
-        private decimal maxAmount = 255;
+        private decimal maxAmount = 8;
 
         public static DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(TestyTest), typeof(MainWindow));
         public TestyTest item
@@ -322,7 +322,9 @@ namespace OneDriveDaily
                 OnPropertyChanged(nameof(m_arrPages));
                 OnPropertyChanged(nameof(m_totalPages));
 
-                File.Delete(temp);
+                //File.Delete(temp);
+
+                Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(temp, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
 
                 item = index < m_arrFiles.Count ? m_arrFiles[index] : m_arrFiles[m_arrFiles.Count - 1];
                 name = item.ImageUri;
