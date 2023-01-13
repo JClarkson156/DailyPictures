@@ -65,6 +65,10 @@ namespace OneDriveDaily
 
             DataContext = this;
 
+#if DEBUG
+            maxAmount = 16;
+#endif
+
             index = 0;
             m_arrPages = 1;
             m_totalPages = 1;
@@ -77,7 +81,7 @@ namespace OneDriveDaily
         //public List<string> m_arrFiles;
         private string[] Paths = new string[6] { ".bmp", ".jpg", ".jpeg", ".png", ".jfif", ".webp" };
 
-        private decimal maxAmount = 8;
+        private decimal maxAmount = 128;
 
         public static DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(TestyTest), typeof(MainWindow));
         public TestyTest item
@@ -399,6 +403,13 @@ namespace OneDriveDaily
             {
                 File.Copy(item.ImageUri, "C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background.jpg", true);
             }
+            else if (e.Key == Key.F4)
+            {
+                System.Drawing.Image image = System.Drawing.Image.FromFile(item.ImageUri);
+                image.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                image.Save("C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+            }
+
 
             if (name.Length > 0)
             {
@@ -442,6 +453,7 @@ namespace OneDriveDaily
                 }
                 OnPropertyChanged(nameof(m_arrFiles));
                 OnPropertyChanged(nameof(m_curPage));
+                Test.ScrollIntoView(m_arrFiles[0]);
             }
         }
 
@@ -469,6 +481,7 @@ namespace OneDriveDaily
                 }
                 OnPropertyChanged(nameof(m_arrFiles));
                 OnPropertyChanged(nameof(m_curPage));
+                Test.ScrollIntoView(m_arrFiles[0]);
             }
         }
     }
