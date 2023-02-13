@@ -48,7 +48,14 @@ namespace OneDriveDaily
 
             DataContext = this;
 
-            BetterStuff = File.ReadAllBytes(stuff);
+            try
+            {
+                BetterStuff = File.ReadAllBytes(stuff);
+            }
+            catch 
+            {
+                BetterStuff = null;
+            }
 
             isClosed = false;
 
@@ -56,7 +63,14 @@ namespace OneDriveDaily
 
         public void Update(string stuff)
         {
-            BetterStuff = File.ReadAllBytes(stuff);
+            try
+            {
+                BetterStuff = File.ReadAllBytes(stuff);
+            }
+            catch
+            {
+                BetterStuff = null;
+            }
             OnPropertyChanged(nameof(BetterStuff)); 
         }
 

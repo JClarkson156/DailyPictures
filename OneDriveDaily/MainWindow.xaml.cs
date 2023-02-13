@@ -35,7 +35,11 @@ namespace OneDriveDaily
         {
             ImageUri = uri.Name;
             Size = uri.Size + " KB";
-            Image = File.ReadAllBytes(uri.Name);
+            try
+            {
+                Image = File.ReadAllBytes(uri.Name);
+            }
+            catch { }
 
             var temp = BitmapFrame.Create(new MemoryStream(Image), BitmapCreateOptions.DelayCreation, BitmapCacheOption.None);
             Resolution = $"{temp.PixelWidth} x {temp.PixelHeight}";
@@ -176,7 +180,7 @@ namespace OneDriveDaily
                 arrFiles.AddRange(CountFiles(new DirectoryInfo(item.Trim()).GetFileSystemInfos()));
             }
 
-            var prevWallappers = LoadData();
+            /*var prevWallappers = LoadData();
             foreach (var item in prevWallappers)
             {
                 if(item.Length == 0) continue;
@@ -185,7 +189,7 @@ namespace OneDriveDaily
                     var dInfo = new FileInfo(item);
                     arrFiles.Add(new TestyTest2() { Name = item, Size = dInfo.Length / 1024 });
                 }
-            }
+            }*/
 
             m_arrFiles = new ObservableCollection<TestyTest>();
             arrFiles = arrFiles.OrderBy(c => System.IO.Path.GetFileNameWithoutExtension(c.Name)).ToList();
@@ -251,6 +255,7 @@ namespace OneDriveDaily
                         var dateAccessed = infos[i].LastAccessTime;
                         var today = DateTime.Today;
                         var yesterday = today.AddDays(-1);
+                        var tomorrow = today.AddDays(1);
 
                         //var fileAdded = false;
 
@@ -297,8 +302,8 @@ namespace OneDriveDaily
                                 files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
                             else if (today.Day == dateCreated.Day && today.Month == dateCreated.Month)
                                 files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
-                            else if ((today.Day == dateAccessed.Day && today.Month == dateAccessed.Month))
-                                    //(yesterday.Day == dateAccessed.Day && yesterday.Month == dateAccessed.Month && yesterday.Year == dateAccessed.Year))
+                            else if ((today.Day == dateAccessed.Day && today.Month == dateAccessed.Month) ||
+                                    (dateAccessed >= yesterday && dateAccessed < tomorrow))
                                 files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
                         //}
 
