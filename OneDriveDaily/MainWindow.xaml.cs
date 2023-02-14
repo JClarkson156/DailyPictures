@@ -88,6 +88,8 @@ namespace OneDriveDaily
 
         private decimal maxAmount = 128;
 
+        private DateTime _prevDate;
+
         public static DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(TestyTest), typeof(MainWindow));
         public TestyTest item
         {
@@ -174,22 +176,13 @@ namespace OneDriveDaily
                 return;
             }
 
+            LoadData();
+
             var arrFolders = strFolders.Split(',');
             foreach (var item in arrFolders)
             {
                 arrFiles.AddRange(CountFiles(new DirectoryInfo(item.Trim()).GetFileSystemInfos()));
             }
-
-            /*var prevWallappers = LoadData();
-            foreach (var item in prevWallappers)
-            {
-                if(item.Length == 0) continue;
-                if (!arrFiles.Where(x => x.Name == item).Any())
-                {
-                    var dInfo = new FileInfo(item);
-                    arrFiles.Add(new TestyTest2() { Name = item, Size = dInfo.Length / 1024 });
-                }
-            }*/
 
             m_arrFiles = new ObservableCollection<TestyTest>();
             arrFiles = arrFiles.OrderBy(c => System.IO.Path.GetFileNameWithoutExtension(c.Name)).ToList();
@@ -208,32 +201,40 @@ namespace OneDriveDaily
             }
         }
 
-        public List<string> LoadData()
+        public void LoadData()
         {
             var systemPath = System.Environment.GetFolderPath(
                 Environment.SpecialFolder.LocalApplicationData
             );
             var complete = Path.Combine(systemPath, "files3.txt");
-            List<string> lines = new List<string>(); 
+            DateTime prevDate = DateTime.Today;
             try
             {
                 using (StreamReader iso = new StreamReader(complete))
                 {
-                    string nextLine = "";
-                    while ((nextLine = iso.ReadLine()) != null)
-                    {
-                        lines.Add(nextLine);
-                    }
+                    string dateString = iso.ReadToEnd();
+                    DateTime.TryParse(dateString.Trim(), out prevDate);
                 }
-                using (StreamWriter iso2 = new StreamWriter(complete,false))
-                {
-                    iso2.WriteLine("");
-                }
-                return lines;
             }
             catch
             {
-                return lines;
+            }
+            finally
+            {
+                _prevDate = prevDate;
+            }
+        }
+
+        public void SaveData()
+        {
+            var systemPath = System.Environment.GetFolderPath(
+                Environment.SpecialFolder.LocalApplicationData
+            );
+            var complete = Path.Combine(systemPath, "files3.txt");
+
+            using (StreamWriter iso = new StreamWriter(complete, false))
+            {
+                iso.WriteLine(DateTime.Now.ToString());
             }
         }
 
@@ -303,7 +304,7 @@ namespace OneDriveDaily
                             else if (today.Day == dateCreated.Day && today.Month == dateCreated.Month)
                                 files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
                             else if ((today.Day == dateAccessed.Day && today.Month == dateAccessed.Month) ||
-                                    (dateAccessed >= yesterday && dateAccessed < tomorrow))
+                                    (dateAccessed >= _prevDate && dateAccessed < tomorrow))
                                 files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
                         //}
 
@@ -350,6 +351,7 @@ namespace OneDriveDaily
         }
 
         int LastIndex = 0;
+        private bool savedData = false;
 
         private void Image_KeyDown(object sender, KeyEventArgs e)
         {
@@ -371,7 +373,14 @@ namespace OneDriveDaily
                 m_arrFiles.Remove(item);
                 m_arrFiles2.RemoveAt(m_arrFiles2.FindIndex(m_curPage0 * (int)maxAmount, r => r.Name == item.ImageUri));
                 if (m_arrFiles2.Count >= (m_curPage0 * (int)maxAmount) + (int)maxAmount)
+                {
                     m_arrFiles.Add(new TestyTest(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1]));
+                    if (!savedData)
+                    {
+                        savedData = true;
+                        SaveData();
+                    }
+                }
                 m_arrPages = (int)Math.Ceiling(m_arrFiles2.Count / maxAmount);
                 m_totalPages = m_arrFiles2.Count;
 
@@ -517,6 +526,8 @@ namespace OneDriveDaily
             {
                 m_curPage++;
                 m_curPage0++;
+                if (m_curPage == m_arrPages)
+                    SaveData();
                 m_arrFiles = new ObservableCollection<TestyTest>();
                 for (int i = m_curPage0 * (int)maxAmount; i < m_arrFiles2.Count; i++)
                 {
