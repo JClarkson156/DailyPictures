@@ -38,12 +38,11 @@ namespace OneDriveDaily
             try
             {
                 Image = File.ReadAllBytes(uri.Name);
+                var temp = BitmapFrame.Create(new MemoryStream(Image), BitmapCreateOptions.DelayCreation, BitmapCacheOption.None);
+                Resolution = $"{temp.PixelWidth} x {temp.PixelHeight}";
+                temp = null;
             }
             catch { }
-
-            var temp = BitmapFrame.Create(new MemoryStream(Image), BitmapCreateOptions.DelayCreation, BitmapCacheOption.None);
-            Resolution = $"{temp.PixelWidth} x {temp.PixelHeight}";
-            temp = null;
         }
 
         public string ImageUri { get; set; }
@@ -375,6 +374,10 @@ namespace OneDriveDaily
                 if (m_arrFiles2.Count >= (m_curPage0 * (int)maxAmount) + (int)maxAmount)
                 {
                     m_arrFiles.Add(new TestyTest(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1]));
+
+                }
+                else
+                {
                     if (!savedData)
                     {
                         savedData = true;
