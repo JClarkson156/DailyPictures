@@ -73,6 +73,9 @@ namespace OneDriveDaily
             maxAmount = 16;
 #endif
 
+            LoadData();
+
+
             index = 0;
             m_arrPages = 1;
             m_totalPages = 1;
@@ -153,6 +156,7 @@ namespace OneDriveDaily
 
         public Window1 window = null;
         private List<TestyTest2> m_arrFiles2 = null;
+        private string  _strFolders = String.Empty;
         private void ChooseFiles()
         {
             var arrFiles = new List<TestyTest2>();
@@ -161,23 +165,21 @@ namespace OneDriveDaily
                 Environment.SpecialFolder.LocalApplicationData
             );
             var complete = System.IO.Path.Combine(systemPath, "files2.txt");
-            var strFolders = "";
             try
             {
                 using (StreamReader iso = new StreamReader(complete))
                 {
-                    strFolders = iso.ReadLine();
+                    _strFolders = iso.ReadLine();
                 }
-                if (strFolders.Length == 0) return;
+                if (_strFolders.Length == 0) return;
             }
             catch
             {
                 return;
             }
 
-            LoadData();
 
-            var arrFolders = strFolders.Split(',');
+            var arrFolders = _strFolders.Split(',');
             foreach (var item in arrFolders)
             {
                 arrFiles.AddRange(CountFiles(new DirectoryInfo(item.Trim()).GetFileSystemInfos()));
@@ -254,58 +256,15 @@ namespace OneDriveDaily
                         var dateEdited = infos[i].LastWriteTime;
                         var dateAccessed = infos[i].LastAccessTime;
                         var today = DateTime.Today;
-                        var yesterday = today.AddDays(-1);
                         var tomorrow = today.AddDays(1);
 
-                        //var fileAdded = false;
-
-                        /*using (var stream = new FileStream(infos[i].FullName, FileMode.Open))
-                        {
-                            stream.Seek(0, SeekOrigin.Begin);
-                            var baseImage = System.Drawing.Image.FromStream(stream, false, false);
-
-                            var index = Array.FindIndex(baseImage.PropertyIdList, 0, EndsWithSaurus);
-                            if (index != -1)
-                            {
-                                var property = baseImage.PropertyItems[index];
-                                if (property != null && property.Value != null && property.Value.Length == 6)
-                                {
-                                    var data = System.Text.Encoding.ASCII.GetString(property.Value).Split(':', ' ');
-                                    var month = Int32.Parse(data[1]);
-                                    var day = Int32.Parse(data[2]);
-                                    if (day == date.Day && month == date.Month)
-                                    {
-                                        files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
-                                        fileAdded = true;
-                                    }
-                                }
-                            }
-                            baseImage.Dispose();
-                        }*/
-
-                        //var test2 = System.Drawing.Image.FromFile(infos[i].FullName, false);
-
-                        //DateTime test3;
-                        //var result = DateTime.TryParse((test.Metadata as BitmapMetadata).DateTaken, out test3);
-
-                        //if (result && test3.Day == date.Day && test3.Month == date.Month)
-                        //  files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
-                        //else 
-                        //if (dateCreated > dateEdited)
-                        //{
-                            //if (today.Day == dateEdited.Day && today.Month == dateEdited.Month)
-                                //files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
-                        //}
-                        //else
-                        //{
-                            if (today.Day == dateEdited.Day && today.Month == dateEdited.Month)
-                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
-                            else if (today.Day == dateCreated.Day && today.Month == dateCreated.Month)
-                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
-                            else if ((today.Day == dateAccessed.Day && today.Month == dateAccessed.Month) ||
-                                    (dateAccessed >= _prevDate && dateAccessed < tomorrow))
-                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
-                        //}
+                        if (today.Day == dateEdited.Day && today.Month == dateEdited.Month)
+                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
+                        else if (today.Day == dateCreated.Day && today.Month == dateCreated.Month)
+                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
+                        else if ((today.Day == dateAccessed.Day && today.Month == dateAccessed.Month) ||
+                                (dateAccessed >= _prevDate && dateAccessed < tomorrow))
+                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024 });
 
                         if (today.Month == 2 && today.Day == 29)
                         {
@@ -391,9 +350,10 @@ namespace OneDriveDaily
                 OnPropertyChanged(nameof(m_arrPages));
                 OnPropertyChanged(nameof(m_totalPages));
 
-                //File.Delete(temp);
-
+#if DEBUG
+#else
                 Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(temp, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+#endif
 
                 item = index < m_arrFiles.Count ? m_arrFiles[index] : m_arrFiles[m_arrFiles.Count - 1];
                 name = item.ImageUri;
@@ -467,6 +427,16 @@ namespace OneDriveDaily
             else if (e.Key == Key.F3)
             {
                 File.Copy(item.ImageUri, "C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background.jpg", true);
+            }
+            else if (e.Key == Key.F8)
+            {
+                var fileInfo = new FileInfo(item.ImageUri);
+                File.Move(item.ImageUri, "C:\\Users\\James\\OneDrive\\Pictures\\Pictures\\Unsorted\\MoveToPhone\\" + fileInfo.Name, true);
+            }
+            else if (e.Key == Key.F9)
+            {
+                var fileInfo = new FileInfo(item.ImageUri);
+                File.Copy(item.ImageUri, "C:\\Users\\James\\OneDrive\\Desktop\\" + fileInfo.Name, true);
             }
             else if (e.Key == Key.F4)
             {
@@ -550,6 +520,78 @@ namespace OneDriveDaily
                 OnPropertyChanged(nameof(m_curPage));
                 Test.ScrollIntoView(m_arrFiles[0]);
             }
+        }
+
+        private void Refresh_Click(object sender, RoutedEventArgs e)
+        {
+            for(var i = 0; i< m_arrFiles2.Count;)
+            {
+                var item = m_arrFiles2[i];
+
+                if (File.Exists(item.Name))
+                {
+                    i++;
+                }
+                else
+                {
+                    m_arrFiles2.RemoveAt(i);
+                }
+            }
+
+            var arrFolders = _strFolders.Split(',');
+            var arrFiles = new List<TestyTest2>();
+
+            foreach (var item in arrFolders)
+            {
+                arrFiles.AddRange(CountFiles(new DirectoryInfo(item.Trim()).GetFileSystemInfos()));
+            }
+
+            arrFiles = arrFiles.OrderBy(c => System.IO.Path.GetFileNameWithoutExtension(c.Name)).ToList();
+
+            for(var i = 0; i< arrFiles.Count;)
+            {
+                var item = arrFiles[i];
+
+                if (m_arrFiles2.Where(x => x.Name == item.Name).Any())
+                    arrFiles.RemoveAt(i);
+                else
+                    i++;
+            }
+
+            m_arrFiles2.AddRange(arrFiles);
+
+            m_arrPages = (int)Math.Ceiling(m_arrFiles2.Count / maxAmount);
+            m_totalPages = m_arrFiles2.Count;
+
+            if (m_curPage > m_arrPages)
+            {
+                m_curPage = 1;
+                m_curPage0 = 0;
+            }
+
+            if (m_curPage == m_arrPages)
+                SaveData();
+
+            m_arrFiles = new ObservableCollection<TestyTest>();
+
+            for (int i = m_curPage0 * (int)maxAmount; i < m_arrFiles2.Count; i++)
+            {
+                item = null;
+                try
+                {
+                    item = new TestyTest(m_arrFiles2[i]);
+                }
+                catch { }
+                if (item != null)
+                    m_arrFiles.Add(item);
+
+                if (m_arrFiles.Count == maxAmount)
+                    break;
+            }
+
+            OnPropertyChanged(nameof(m_arrFiles));
+            OnPropertyChanged(nameof(m_curPage));
+            OnPropertyChanged(nameof(m_totalPages));
         }
     }
 }

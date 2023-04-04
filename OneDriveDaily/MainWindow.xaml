@@ -44,6 +44,8 @@
             <TextBlock Text="{Binding m_totalPages}"/>
             <TextBlock Text=" images "/>
 
+            <Button Width="50" Height="30" Name="Refresh" Click="Refresh_Click">Refresh</Button>
+
         </StackPanel>
     </Grid>
 </Window>
