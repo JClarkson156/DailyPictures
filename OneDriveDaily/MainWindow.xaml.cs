@@ -31,10 +31,11 @@ namespace OneDriveDaily
 
     public class TestyTest
     {
-        public TestyTest(TestyTest2 uri)
+        public TestyTest(TestyTest2 uri, FontWeight weight)
         {
             ImageUri = uri.Name;
             Size = uri.Size + " KB";
+            Weight = weight;
             try
             {
                 Image = File.ReadAllBytes(uri.Name);
@@ -52,6 +53,8 @@ namespace OneDriveDaily
         public string Size { get; set; }
 
         public byte[] Image { get; set; }
+
+        public FontWeight Weight { get; set; }
     }
 
     public class TestyTest2
@@ -88,7 +91,7 @@ namespace OneDriveDaily
         //public List<string> m_arrFiles;
         private string[] Paths = new string[6] { ".bmp", ".jpg", ".jpeg", ".png", ".jfif", ".webp" };
 
-        private decimal maxAmount = 128;
+        private decimal maxAmount = 100;
 
         private DateTime _prevDate;
 
@@ -195,7 +198,7 @@ namespace OneDriveDaily
 
             foreach (var item in arrFiles)
             {
-                m_arrFiles.Add(new TestyTest(item));
+                m_arrFiles.Add(new TestyTest(item, FontWeights.Normal));
 
                 if (m_arrFiles.Count == maxAmount)
                     break;
@@ -332,7 +335,7 @@ namespace OneDriveDaily
                 m_arrFiles2.RemoveAt(m_arrFiles2.FindIndex(m_curPage0 * (int)maxAmount, r => r.Name == item.ImageUri));
                 if (m_arrFiles2.Count >= (m_curPage0 * (int)maxAmount) + (int)maxAmount)
                 {
-                    m_arrFiles.Add(new TestyTest(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1]));
+                    m_arrFiles.Add(new TestyTest(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1], FontWeights.Bold));
 
                 }
                 else
@@ -477,7 +480,7 @@ namespace OneDriveDaily
                     item = null;
                     try
                     {
-                        item = new TestyTest(m_arrFiles2[i]);
+                        item = new TestyTest(m_arrFiles2[i], FontWeights.Normal);
                     }
                     catch { }
                     if (item != null)
@@ -507,7 +510,7 @@ namespace OneDriveDaily
                     item = null;
                     try
                     {
-                        item = new TestyTest(m_arrFiles2[i]);
+                        item = new TestyTest(m_arrFiles2[i], FontWeights.Normal);
                     }
                     catch { }
                     if (item != null)
@@ -579,7 +582,7 @@ namespace OneDriveDaily
                 item = null;
                 try
                 {
-                    item = new TestyTest(m_arrFiles2[i]);
+                    item = new TestyTest(m_arrFiles2[i], FontWeights.Normal);
                 }
                 catch { }
                 if (item != null)

@@ -26,9 +26,9 @@
                                 <BitmapImage UriSource="{Binding item.Image}" CacheOption="OnLoad"/>
                             </Image.Source -->
                         </Image>
-                        <TextBlock MaxWidth="300" TextWrapping="Wrap" Text="{Binding ImageUri}"/>
-                        <TextBlock HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Resolution}"/>
-                        <TextBlock HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Size}"/>
+                        <TextBlock FontWeight="{Binding Weight}" MaxWidth="300" TextWrapping="Wrap" Text="{Binding ImageUri}"/>
+                        <TextBlock FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Resolution}"/>
+                        <TextBlock FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Size}"/>
                     </StackPanel>
                 </DataTemplate>
             </ListView.ItemTemplate>
