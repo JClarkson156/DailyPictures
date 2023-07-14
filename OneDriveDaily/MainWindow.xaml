@@ -29,6 +29,7 @@
                         <TextBlock FontWeight="{Binding Weight}" MaxWidth="300" TextWrapping="Wrap" Text="{Binding ImageUri}"/>
                         <TextBlock FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Resolution}"/>
                         <TextBlock FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Size}"/>
+                        <TextBlock FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Date}"/>
                     </StackPanel>
                 </DataTemplate>
             </ListView.ItemTemplate>
@@ -45,6 +46,13 @@
             <TextBlock Text=" images "/>
 
             <Button Width="50" Height="30" Name="Refresh" Click="Refresh_Click">Refresh</Button>
+
+            <TextBlock Text="Deleted on Current Page: "/>
+            <TextBlock Text="{Binding m_nDeletedCurPage}"/>
+
+            <TextBlock Text=" -- Deleted Total: "/>
+            <TextBlock Text="{Binding m_nDeletedTotal}"/>
+
 
         </StackPanel>
     </Grid>
