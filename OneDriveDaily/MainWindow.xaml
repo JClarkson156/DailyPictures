@@ -27,8 +27,11 @@
                             </Image.Source -->
                         </Image>
                         <TextBlock FontWeight="{Binding Weight}" MaxWidth="300" TextWrapping="Wrap" Text="{Binding ImageUri}"/>
-                        <TextBlock FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Resolution}"/>
-                        <TextBlock FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Size}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Resolution}"/>
+                            <TextBlock Text=" - "/>
+                            <TextBlock FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Size}"/>
+                        </StackPanel>
                         <TextBlock FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Date}"/>
                     </StackPanel>
                 </DataTemplate>
