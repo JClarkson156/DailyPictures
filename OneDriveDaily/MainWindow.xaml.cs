@@ -137,7 +137,7 @@ namespace OneDriveDaily
             set { this.SetValue(ListProperty3, value); }
         }
 
-        public static DependencyProperty ListProperty9 = DependencyProperty.Register("Text9", typeof(int), typeof(MainWindow));
+        public static DependencyProperty ListProperty9 = DependencyProperty.Register("Text11", typeof(int), typeof(MainWindow));
         public int m_nDeletedCurPage
         {
             get { return (int)GetValue(ListProperty9); }
