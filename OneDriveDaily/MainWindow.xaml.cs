@@ -67,6 +67,17 @@ namespace OneDriveDaily
         public long Size { get; set; } = 0;
 
         public DateTime Date { get; set; }
+
+        string _dateString = string.Empty;
+        public string DateString
+        {
+            get
+            {
+                if(_dateString == string.Empty) 
+                    _dateString = Date.ToString("yyyyMMddHHmmss");
+                return _dateString;
+            }
+        }
     }
 
     public partial class MainWindow : Window, INotifyPropertyChanged
@@ -209,6 +220,16 @@ namespace OneDriveDaily
                 arrFiles.AddRange(CountFiles(new DirectoryInfo(item.Trim()).GetFileSystemInfos()));
             }
 
+            var arrFiles2 = arrFiles.GroupBy(x => x.DateString);
+
+            foreach (var item in arrFiles2)
+            {
+                if (item.Count() > 4)
+                {
+                    arrFiles.RemoveAll(arrFile => arrFile.DateString == item.Key); 
+                }
+            }
+
             m_arrFiles = new ObservableCollection<TestyTest>();
             arrFiles = arrFiles.OrderBy(c => System.IO.Path.GetFileNameWithoutExtension(c.Name)).ToList();
             
@@ -333,8 +354,6 @@ namespace OneDriveDaily
         }
 
         int LastIndex = 0;
-        private bool savedData = false;
-
         private void Image_KeyDown(object sender, KeyEventArgs e)
         {
             var name = "";
@@ -361,11 +380,7 @@ namespace OneDriveDaily
                 }
                 else
                 {
-                    if (!savedData)
-                    {
-                        savedData = true;
-                        SaveData();
-                    }
+                    SaveData();
                 }
                 m_arrPages = (int)Math.Ceiling(m_arrFiles2.Count / maxAmount);
                 m_totalPages = m_arrFiles2.Count;
@@ -577,6 +592,16 @@ namespace OneDriveDaily
             foreach (var item in arrFolders)
             {
                 arrFiles.AddRange(CountFiles(new DirectoryInfo(item.Trim()).GetFileSystemInfos()));
+            }
+
+            var arrFiles2 = arrFiles.GroupBy(x => x.DateString);
+
+            foreach (var item in arrFiles2)
+            {
+                if (item.Count() > 4)
+                {
+                    arrFiles.RemoveAll(arrFile => arrFile.DateString == item.Key);
+                }
             }
 
             arrFiles = arrFiles.OrderBy(c => System.IO.Path.GetFileNameWithoutExtension(c.Name)).ToList();
