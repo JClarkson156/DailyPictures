@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Closing="Window_Closing"
         Title="Window1" Height="450" Width="800">
-    <Grid>
+    <Grid Background="#8768B4">
         <Image x:Name="Stuff" 
                Source="{Binding BetterStuff, UpdateSourceTrigger=PropertyChanged}"
                 Stretch="Uniform"

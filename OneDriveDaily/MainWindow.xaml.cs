@@ -67,13 +67,18 @@ namespace OneDriveDaily
         public long Size { get; set; } = 0;
 
         public DateTime Date { get; set; }
+        public bool IgnoreDateString { get; set; }
 
         string _dateString = string.Empty;
         public string DateString
         {
             get
             {
-                if(_dateString == string.Empty) 
+                if (IgnoreDateString && _dateString == string.Empty)
+                    _dateString = "-";
+                if (Name.Contains("Unsorted"))
+                    _dateString = "-";
+                if (_dateString == string.Empty) 
                     _dateString = Date.ToString("yyyyMMddHHmmss");
                 return _dateString;
             }
@@ -220,16 +225,6 @@ namespace OneDriveDaily
                 arrFiles.AddRange(CountFiles(new DirectoryInfo(item.Trim()).GetFileSystemInfos()));
             }
 
-            var arrFiles2 = arrFiles.GroupBy(x => x.DateString);
-
-            foreach (var item in arrFiles2)
-            {
-                if (item.Count() > 4)
-                {
-                    arrFiles.RemoveAll(arrFile => arrFile.DateString == item.Key); 
-                }
-            }
-
             m_arrFiles = new ObservableCollection<TestyTest>();
             arrFiles = arrFiles.OrderBy(c => System.IO.Path.GetFileNameWithoutExtension(c.Name)).ToList();
             
@@ -300,26 +295,35 @@ namespace OneDriveDaily
                         var dateCreated = infos[i].CreationTime;
                         var dateEdited = infos[i].LastWriteTime;
                         var dateAccessed = infos[i].LastAccessTime;
-                        var today = DateTime.Today;
+                        var today = DateTime.Today;//.AddDays(-1);
                         var tomorrow = today.AddDays(1);
 
                         if (today.Day == dateEdited.Day && today.Month == dateEdited.Month)
-                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateEdited });
+                        {
+                            //infos[i].LastAccessTime = DateTime.Now;
+                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateEdited, IgnoreDateString = true });
+                        }
                         else if (today.Day == dateCreated.Day && today.Month == dateCreated.Month)
-                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateCreated });
+                        {
+                            //infos[i].LastAccessTime = DateTime.Now;
+                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateCreated, IgnoreDateString = true });
+                        }
                         else if ((today.Day == dateAccessed.Day && today.Month == dateAccessed.Month) ||
                                 (dateAccessed >= _prevDate && dateAccessed < tomorrow))
-                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateAccessed });
+                        {
+                            //infos[i].LastAccessTime = DateTime.Now;
+                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateAccessed, IgnoreDateString = false });
+                        }
 
                         if (today.Month == 2 && today.Day == 29)
                         {
                             today = today.AddDays(1);
                             if (today.Day == dateCreated.Day && today.Month == dateCreated.Month)
-                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateCreated });
+                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateCreated, IgnoreDateString = true });
                             else if (today.Day == dateEdited.Day && today.Month == dateEdited.Month)
-                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateEdited });
+                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateEdited, IgnoreDateString = true });
                             else if (today.Day == dateAccessed.Day && today.Month == dateAccessed.Month)
-                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateAccessed });
+                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateAccessed, IgnoreDateString = false });
                         }
                     }
                 }
@@ -454,7 +458,7 @@ namespace OneDriveDaily
             }
             else if (e.Key == Key.Down)
             {
-                if (index >= this.Test.Items.Count - 5) { }
+                if (index >= this.Test.Items.Count - 4) { }
                 else
                 {
                     if (Math.Abs(index - LastIndex) > 4)
@@ -470,9 +474,25 @@ namespace OneDriveDaily
             }
             else if (e.Key == Key.F3)
             {
-                File.Copy(item.ImageUri, "C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background.jpg", true);
+                File.Copy(item.ImageUri, "C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background1.jpg", true);
             }
-            else if (e.Key == Key.F8)
+            else if (e.Key == Key.F1)
+            {
+                File.Copy(item.ImageUri, "C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background0.jpg", true);
+            }
+            else if (e.Key == Key.F5)
+            {
+                File.Copy(item.ImageUri, "C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background2.jpg", true);
+            }
+            else if (e.Key == Key.F7)
+            {
+                File.Copy(item.ImageUri, "C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background3.jpg", true);
+            }
+            else if (e.Key == Key.F11)
+            {
+                File.Copy(item.ImageUri, "C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background4.jpg", true);
+            }
+            else if (e.Key == Key.F10)
             {
                 var fileInfo = new FileInfo(item.ImageUri);
                 File.Move(item.ImageUri, "C:\\Users\\James\\OneDrive\\Pictures\\Pictures\\Unsorted\\MoveToPhone\\" + fileInfo.Name, true);
@@ -486,7 +506,31 @@ namespace OneDriveDaily
             {
                 System.Drawing.Image image = System.Drawing.Image.FromFile(item.ImageUri);
                 image.RotateFlip(RotateFlipType.RotateNoneFlipX);
-                image.Save("C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+                image.Save("C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background1.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+            }
+            else if (e.Key == Key.F2)
+            {
+                System.Drawing.Image image = System.Drawing.Image.FromFile(item.ImageUri);
+                image.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                image.Save("C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background0.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+            }
+            else if (e.Key == Key.F6)
+            {
+                System.Drawing.Image image = System.Drawing.Image.FromFile(item.ImageUri);
+                image.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                image.Save("C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background2.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+            }
+            else if (e.Key == Key.F)
+            {
+                System.Drawing.Image image = System.Drawing.Image.FromFile(item.ImageUri);
+                image.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                image.Save("C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background3.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+            }
+            else if (e.Key == Key.F12)
+            {
+                System.Drawing.Image image = System.Drawing.Image.FromFile(item.ImageUri);
+                image.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                image.Save("C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background4.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
             }
 
 
@@ -592,16 +636,6 @@ namespace OneDriveDaily
             foreach (var item in arrFolders)
             {
                 arrFiles.AddRange(CountFiles(new DirectoryInfo(item.Trim()).GetFileSystemInfos()));
-            }
-
-            var arrFiles2 = arrFiles.GroupBy(x => x.DateString);
-
-            foreach (var item in arrFiles2)
-            {
-                if (item.Count() > 4)
-                {
-                    arrFiles.RemoveAll(arrFile => arrFile.DateString == item.Key);
-                }
             }
 
             arrFiles = arrFiles.OrderBy(c => System.IO.Path.GetFileNameWithoutExtension(c.Name)).ToList();

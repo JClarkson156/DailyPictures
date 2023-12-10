@@ -7,12 +7,12 @@
         mc:Ignorable="d"
         WindowState="Maximized"
         Title="MainWindow" Height="900" Width="1440">
-    <Grid>
+    <Grid Background="#8768B4">
         <Grid.RowDefinitions>
             <RowDefinition Height="850" />
             <RowDefinition Height="50" />
         </Grid.RowDefinitions>
-        <ListView Grid.Row="0" ItemsSource="{Binding m_arrFiles, UpdateSourceTrigger=PropertyChanged}" PreviewKeyDown="Image_KeyDown"    MaxWidth="1400"  Name="Test">
+        <ListView  Background="#8768B4" Grid.Row="0" ItemsSource="{Binding m_arrFiles, UpdateSourceTrigger=PropertyChanged}" PreviewKeyDown="Image_KeyDown"    MaxWidth="1400"  Name="Test">
             <ListView.ItemsPanel>
                 <ItemsPanelTemplate>
                     <WrapPanel MaxWidth="1440" Margin="10" Width="1350" />
