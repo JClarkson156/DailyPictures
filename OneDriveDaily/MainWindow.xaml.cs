@@ -36,7 +36,7 @@ namespace OneDriveDaily
             ImageUri = uri.Name;
             Size = uri.Size + " KB";
             Weight = weight;
-            Date = uri.Date.ToString();
+            Date = uri.DateType + " - " + uri.Date.ToString();
             try
             {
                 Image = File.ReadAllBytes(uri.Name);
@@ -65,24 +65,8 @@ namespace OneDriveDaily
         public string Name { get; set; } = "";
         public string Resolution { get; set; } = "";
         public long Size { get; set; } = 0;
-
         public DateTime Date { get; set; }
-        public bool IgnoreDateString { get; set; }
-
-        string _dateString = string.Empty;
-        public string DateString
-        {
-            get
-            {
-                if (IgnoreDateString && _dateString == string.Empty)
-                    _dateString = "-";
-                if (Name.Contains("Unsorted"))
-                    _dateString = "-";
-                if (_dateString == string.Empty) 
-                    _dateString = Date.ToString("yyyyMMddHHmmss");
-                return _dateString;
-            }
-        }
+        public string DateType { get; set; }
     }
 
     public partial class MainWindow : Window, INotifyPropertyChanged
@@ -301,29 +285,29 @@ namespace OneDriveDaily
                         if (today.Day == dateEdited.Day && today.Month == dateEdited.Month)
                         {
                             //infos[i].LastAccessTime = DateTime.Now;
-                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateEdited, IgnoreDateString = true });
+                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateEdited, DateType = "Edited" });
                         }
                         else if (today.Day == dateCreated.Day && today.Month == dateCreated.Month)
                         {
                             //infos[i].LastAccessTime = DateTime.Now;
-                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateCreated, IgnoreDateString = true });
+                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateCreated, DateType = "Created" });
                         }
                         else if ((today.Day == dateAccessed.Day && today.Month == dateAccessed.Month) ||
                                 (dateAccessed >= _prevDate && dateAccessed < tomorrow))
                         {
                             //infos[i].LastAccessTime = DateTime.Now;
-                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateAccessed, IgnoreDateString = false });
+                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateAccessed, DateType = "Accessed" });
                         }
 
                         if (today.Month == 2 && today.Day == 29)
                         {
                             today = today.AddDays(1);
                             if (today.Day == dateCreated.Day && today.Month == dateCreated.Month)
-                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateCreated, IgnoreDateString = true });
+                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateCreated, DateType = "Created" });
                             else if (today.Day == dateEdited.Day && today.Month == dateEdited.Month)
-                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateEdited, IgnoreDateString = true });
+                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateEdited, DateType = "Edited" });
                             else if (today.Day == dateAccessed.Day && today.Month == dateAccessed.Month)
-                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateAccessed, IgnoreDateString = false });
+                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateAccessed, DateType = "Accessed" });
                         }
                     }
                 }
@@ -358,6 +342,8 @@ namespace OneDriveDaily
         }
 
         int LastIndex = 0;
+        int number = 0;
+
         private void Image_KeyDown(object sender, KeyEventArgs e)
         {
             var name = "";
@@ -474,23 +460,8 @@ namespace OneDriveDaily
             }
             else if (e.Key == Key.F3)
             {
-                File.Copy(item.ImageUri, "C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background1.jpg", true);
-            }
-            else if (e.Key == Key.F1)
-            {
-                File.Copy(item.ImageUri, "C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background0.jpg", true);
-            }
-            else if (e.Key == Key.F5)
-            {
-                File.Copy(item.ImageUri, "C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background2.jpg", true);
-            }
-            else if (e.Key == Key.F7)
-            {
-                File.Copy(item.ImageUri, "C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background3.jpg", true);
-            }
-            else if (e.Key == Key.F11)
-            {
-                File.Copy(item.ImageUri, "C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background4.jpg", true);
+                File.Copy(item.ImageUri, $"C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background{number}.jpg", true);
+                number++;
             }
             else if (e.Key == Key.F10)
             {
@@ -506,32 +477,12 @@ namespace OneDriveDaily
             {
                 System.Drawing.Image image = System.Drawing.Image.FromFile(item.ImageUri);
                 image.RotateFlip(RotateFlipType.RotateNoneFlipX);
-                image.Save("C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background1.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+                image.Save($"C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background{number}.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+                number++;
             }
-            else if (e.Key == Key.F2)
-            {
-                System.Drawing.Image image = System.Drawing.Image.FromFile(item.ImageUri);
-                image.RotateFlip(RotateFlipType.RotateNoneFlipX);
-                image.Save("C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background0.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
-            }
-            else if (e.Key == Key.F6)
-            {
-                System.Drawing.Image image = System.Drawing.Image.FromFile(item.ImageUri);
-                image.RotateFlip(RotateFlipType.RotateNoneFlipX);
-                image.Save("C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background2.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
-            }
-            else if (e.Key == Key.F)
-            {
-                System.Drawing.Image image = System.Drawing.Image.FromFile(item.ImageUri);
-                image.RotateFlip(RotateFlipType.RotateNoneFlipX);
-                image.Save("C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background3.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
-            }
-            else if (e.Key == Key.F12)
-            {
-                System.Drawing.Image image = System.Drawing.Image.FromFile(item.ImageUri);
-                image.RotateFlip(RotateFlipType.RotateNoneFlipX);
-                image.Save("C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background4.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
-            }
+
+            if (number > 4)
+                number = 0;
 
 
             if (name.Length > 0)
