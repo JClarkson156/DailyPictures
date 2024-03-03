@@ -279,7 +279,7 @@ namespace OneDriveDaily
                         var dateCreated = infos[i].CreationTime;
                         var dateEdited = infos[i].LastWriteTime;
                         var dateAccessed = infos[i].LastAccessTime;
-                        var today = DateTime.Today;//.AddDays(-1);
+                        var today = DateTime.Today;//.AddDays(-5);
                         var tomorrow = today.AddDays(1);
 
                         if (today.Day == dateEdited.Day && today.Month == dateEdited.Month)
@@ -460,24 +460,35 @@ namespace OneDriveDaily
             }
             else if (e.Key == Key.F3)
             {
-                File.Copy(item.ImageUri, $"C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background{number}.jpg", true);
+                File.Copy(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\Extensions\\Bah\\images\\background{number}.jpg", true);
                 number++;
             }
             else if (e.Key == Key.F10)
             {
                 var fileInfo = new FileInfo(item.ImageUri);
-                File.Move(item.ImageUri, "C:\\Users\\James\\OneDrive\\Pictures\\Pictures\\Unsorted\\MoveToPhone\\" + fileInfo.Name, true);
+                File.Move(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.MyPictures)}\\Pictures\\Unsorted\\MoveToPhone\\" + fileInfo.Name, true);
             }
             else if (e.Key == Key.F9)
             {
                 var fileInfo = new FileInfo(item.ImageUri);
-                File.Copy(item.ImageUri, "C:\\Users\\James\\OneDrive\\Desktop\\" + fileInfo.Name, true);
+
+                //Will remove date metadata. But program doesn't check that so I don't think it matters so much.
+                //System.Drawing.Image image = System.Drawing.Image.FromFile(item.ImageUri);
+                //image.Save($"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\a{fileInfo.Name}", image.RawFormat);
+                
+                if (fileInfo.LastWriteTime > DateTime.Today.AddDays(-35) || fileInfo.Name.StartsWith("a")) { }
+                else
+                {
+                    fileInfo.CreationTime = DateTime.Now;
+                    fileInfo.LastWriteTime = DateTime.Now;
+                    File.Copy(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\a" + fileInfo.Name, true);
+                }
             }
             else if (e.Key == Key.F4)
             {
                 System.Drawing.Image image = System.Drawing.Image.FromFile(item.ImageUri);
                 image.RotateFlip(RotateFlipType.RotateNoneFlipX);
-                image.Save($"C:\\Users\\James\\OneDrive\\Documents\\Extensions\\Bah\\images\\background{number}.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+                image.Save($"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\Extensions\\Bah\\images\\background{number}.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
                 number++;
             }
 
