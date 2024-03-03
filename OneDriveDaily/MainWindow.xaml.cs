@@ -463,7 +463,7 @@ namespace OneDriveDaily
                 File.Copy(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\Extensions\\Bah\\images\\background{number}.jpg", true);
                 number++;
             }
-            else if (e.Key == Key.F10)
+            else if (e.Key == Key.F11)
             {
                 var fileInfo = new FileInfo(item.ImageUri);
                 File.Move(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.MyPictures)}\\Pictures\\Unsorted\\MoveToPhone\\" + fileInfo.Name, true);
