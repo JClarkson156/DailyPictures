@@ -92,6 +92,8 @@ namespace OneDriveDaily
             m_nDeletedCurPage = 0;
             m_nDeletedTotal = 0;
 
+            MaxWidth = (int)System.Windows.SystemParameters.PrimaryScreenWidth - 50;
+
             ChooseFiles();
         }
 
@@ -158,6 +160,15 @@ namespace OneDriveDaily
         {
             get { return (int)GetValue(ListProperty4); }
             set { this.SetValue(ListProperty4, value); }
+        }
+
+        public static DependencyProperty MaxWidthProp = DependencyProperty.Register("MaxWidth", typeof(int), typeof(MainWindow));
+
+        public int _maxWidth;
+        public int MaxWidth
+        {
+            get { return (int)GetValue(MaxWidthProp); }
+            set { this.SetValue(MaxWidthProp, value); }
         }
 
         public static DependencyProperty ListProperty5 = DependencyProperty.Register("Text9", typeof(int), typeof(MainWindow));
