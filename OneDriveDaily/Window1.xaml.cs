@@ -24,7 +24,7 @@ namespace OneDriveDaily
 
         public static DependencyProperty TextProperty = DependencyProperty.Register("Text2", typeof(byte[]), typeof(Window1));
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         public bool isClosed = true;
         public byte[] BetterStuff
@@ -35,7 +35,7 @@ namespace OneDriveDaily
 
         private void OnPropertyChanged(string propertyName)
         {
-            PropertyChangedEventHandler handler = PropertyChanged;
+            PropertyChangedEventHandler? handler = PropertyChanged;
             if (handler == null) return;
             handler(this, new PropertyChangedEventArgs(propertyName));
         }

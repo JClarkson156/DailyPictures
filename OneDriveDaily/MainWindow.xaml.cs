@@ -21,6 +21,7 @@ using System.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Windows.Interop;
 using Path = System.IO.Path;
+using System.Xml.Linq;
 
 namespace OneDriveDaily
 {
@@ -81,6 +82,7 @@ namespace OneDriveDaily
             maxAmount = 16;
 #endif
 
+
             LoadData();
 
 
@@ -93,6 +95,14 @@ namespace OneDriveDaily
             m_nDeletedTotal = 0;
 
             MaxWidth = (int)System.Windows.SystemParameters.PrimaryScreenWidth - 50;
+
+            _numberPerRow = MaxWidth / 310;
+
+            if (_numberPerRow != 4)
+            {
+                decimal value = Math.Ceiling(maxAmount / _numberPerRow);
+                maxAmount = value * _numberPerRow;
+            }
 
             ChooseFiles();
         }
@@ -180,7 +190,7 @@ namespace OneDriveDaily
             set { this.SetValue(ListProperty5, value); }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         private void OnPropertyChanged(string propertyName)
         {
@@ -192,6 +202,7 @@ namespace OneDriveDaily
         public Window1 window = null;
         private List<TestyTest2> m_arrFiles2 = null;
         private string  _strFolders = String.Empty;
+        private int _numberPerRow;
         private void ChooseFiles()
         {
             var arrFiles = new List<TestyTest2>();
@@ -423,11 +434,17 @@ namespace OneDriveDaily
             }
             else if (e.Key == Key.Right)
             {
-                if (index == this.Test.Items.Count - 1) { }
+                if (index == this.Test.Items.Count - 1) 
+                {
+                    Next_Click(null, null);
+                }
                 else
                 {
                     if (Math.Abs(index - LastIndex) > 1)
+                    {
                         index = LastIndex;
+                        Next_Click(null, null);
+                    }
 
                     index++;
                     item = m_arrFiles[index];
@@ -439,13 +456,13 @@ namespace OneDriveDaily
             }
             else if (e.Key == Key.Up)
             {
-                if (index <= 3) { }
+                if (index <= _numberPerRow - 1) { }
                 else
                 {
-                    if (Math.Abs(index - LastIndex) > 4)
+                    if (Math.Abs(index - LastIndex) > _numberPerRow)
                         index = LastIndex;
 
-                    index -= 4;
+                    index -= _numberPerRow;
                     item = m_arrFiles[index];
                     name = item.ImageUri;
                     item2 = this.m_arrFiles[index].ImageUri;
@@ -455,13 +472,13 @@ namespace OneDriveDaily
             }
             else if (e.Key == Key.Down)
             {
-                if (index >= this.Test.Items.Count - 4) { }
+                if (index >= this.Test.Items.Count - _numberPerRow) { }
                 else
                 {
-                    if (Math.Abs(index - LastIndex) > 4)
+                    if (Math.Abs(index - LastIndex) > _numberPerRow)
                         index = LastIndex;
 
-                    index += 4;
+                    index += _numberPerRow;
                     item = m_arrFiles[index];
                     name = item.ImageUri;
                     this.Test.SelectedItem = item;
@@ -551,6 +568,7 @@ namespace OneDriveDaily
                 OnPropertyChanged(nameof(m_arrFiles));
                 OnPropertyChanged(nameof(m_curPage));
                 OnPropertyChanged(nameof(m_nDeletedCurPage));
+                this.Test.SelectedItem = m_arrFiles[0];
                 Test.ScrollIntoView(m_arrFiles[0]);
             }
         }
@@ -583,6 +601,11 @@ namespace OneDriveDaily
                 OnPropertyChanged(nameof(m_arrFiles));
                 OnPropertyChanged(nameof(m_nDeletedCurPage));
                 OnPropertyChanged(nameof(m_curPage));
+                this.Test.SelectedItem = m_arrFiles[0];
+                index = 0;
+                item2 = this.m_arrFiles[0].ImageUri;
+                window.Update(m_arrFiles[0].ImageUri);
+                window.Show();
                 Test.ScrollIntoView(m_arrFiles[0]);
             }
         }
