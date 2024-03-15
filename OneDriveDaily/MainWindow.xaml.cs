@@ -301,7 +301,7 @@ namespace OneDriveDaily
                         var dateCreated = infos[i].CreationTime;
                         var dateEdited = infos[i].LastWriteTime;
                         var dateAccessed = infos[i].LastAccessTime;
-                        var today = DateTime.Today;//.AddDays(-5);
+                        var today = DateTime.Today;//.AddDays(-1);
                         var tomorrow = today.AddDays(1);
 
                         if (today.Day == dateEdited.Day && today.Month == dateEdited.Month)
@@ -314,8 +314,10 @@ namespace OneDriveDaily
                             //infos[i].LastAccessTime = DateTime.Now;
                             files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateCreated, DateType = "Created" });
                         }
-                        else if ((today.Day == dateAccessed.Day && today.Month == dateAccessed.Month) ||
-                                (dateAccessed >= _prevDate && dateAccessed < tomorrow))
+                        else if ( ( (today.Day == dateAccessed.Day && today.Month == dateAccessed.Month) ||
+                                (dateAccessed >= _prevDate && dateAccessed < tomorrow)) &&
+                                    (infos[i] as FileInfo).Attributes != (FileAttributes)5242912
+                                )
                         {
                             //infos[i].LastAccessTime = DateTime.Now;
                             files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateAccessed, DateType = "Accessed" });
@@ -436,14 +438,16 @@ namespace OneDriveDaily
             {
                 if (index == this.Test.Items.Count - 1) 
                 {
-                    Next_Click(null, null);
+                    if (m_curPage < m_arrPages)
+                        Next_Click(null, null);
                 }
                 else
                 {
                     if (Math.Abs(index - LastIndex) > 1)
                     {
                         index = LastIndex;
-                        Next_Click(null, null);
+                        if (m_curPage < m_arrPages)
+                            Next_Click(null, null);
                     }
 
                     index++;
@@ -507,9 +511,10 @@ namespace OneDriveDaily
                 if (fileInfo.LastWriteTime > DateTime.Today.AddDays(-35) || fileInfo.Name.StartsWith("a")) { }
                 else
                 {
-                    fileInfo.CreationTime = DateTime.Now;
-                    fileInfo.LastWriteTime = DateTime.Now;
                     File.Copy(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\a" + fileInfo.Name, true);
+                    var newFileInfo = new FileInfo($"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\a" + fileInfo.Name);
+                    newFileInfo.CreationTime = DateTime.Now;
+                    newFileInfo.LastWriteTime = DateTime.Now;
                 }
             }
             else if (e.Key == Key.F4)
@@ -603,6 +608,7 @@ namespace OneDriveDaily
                 OnPropertyChanged(nameof(m_curPage));
                 this.Test.SelectedItem = m_arrFiles[0];
                 index = 0;
+                item = m_arrFiles[index];
                 item2 = this.m_arrFiles[0].ImageUri;
                 window.Update(m_arrFiles[0].ImageUri);
                 window.Show();
