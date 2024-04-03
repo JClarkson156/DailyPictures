@@ -203,6 +203,7 @@ namespace OneDriveDaily
         private List<TestyTest2> m_arrFiles2 = null;
         private string  _strFolders = String.Empty;
         private int _numberPerRow;
+        private bool IsLoading = false;
         private void ChooseFiles()
         {
             var arrFiles = new List<TestyTest2>();
@@ -301,36 +302,37 @@ namespace OneDriveDaily
                         var dateCreated = infos[i].CreationTime;
                         var dateEdited = infos[i].LastWriteTime;
                         var dateAccessed = infos[i].LastAccessTime;
-                        var today = DateTime.Today;//.AddDays(-1);
-                        var tomorrow = today.AddDays(1);
+                        var startDate = DateTime.Today;//.AddDays(-1);
+                        var endDate = startDate.AddDays(1);
+                        if (_prevDate.Date.AddDays(1) != startDate.Date)
+                        {
+                            startDate = _prevDate.Date.AddDays(1);
+                        }
 
-                        if (today.Day == dateEdited.Day && today.Month == dateEdited.Month)
+                        if (CheckDate(startDate, endDate, dateEdited, (infos[i] as FileInfo).Attributes, false))
                         {
                             //infos[i].LastAccessTime = DateTime.Now;
                             files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateEdited, DateType = "Edited" });
                         }
-                        else if (today.Day == dateCreated.Day && today.Month == dateCreated.Month)
+                        else if (CheckDate(startDate, endDate, dateCreated, (infos[i] as FileInfo).Attributes, false))
                         {
                             //infos[i].LastAccessTime = DateTime.Now;
                             files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateCreated, DateType = "Created" });
                         }
-                        else if ( ( (today.Day == dateAccessed.Day && today.Month == dateAccessed.Month) ||
-                                (dateAccessed >= _prevDate && dateAccessed < tomorrow)) &&
-                                    (infos[i] as FileInfo).Attributes != (FileAttributes)5242912
-                                )
+                        else if (CheckDate(startDate, endDate, dateAccessed, (infos[i] as FileInfo).Attributes, true))
                         {
                             //infos[i].LastAccessTime = DateTime.Now;
                             files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateAccessed, DateType = "Accessed" });
                         }
 
-                        if (today.Month == 2 && today.Day == 29)
+                        if (startDate.Month == 2 && startDate.Day == 29)
                         {
-                            today = today.AddDays(1);
-                            if (today.Day == dateCreated.Day && today.Month == dateCreated.Month)
+                            startDate = startDate.AddDays(1);
+                            if (startDate.Day == dateCreated.Day && startDate.Month == dateCreated.Month)
                                 files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateCreated, DateType = "Created" });
-                            else if (today.Day == dateEdited.Day && today.Month == dateEdited.Month)
+                            else if (startDate.Day == dateEdited.Day && startDate.Month == dateEdited.Month)
                                 files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateEdited, DateType = "Edited" });
-                            else if (today.Day == dateAccessed.Day && today.Month == dateAccessed.Month)
+                            else if (startDate.Day == dateAccessed.Day && startDate.Month == dateAccessed.Month)
                                 files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateAccessed, DateType = "Accessed" });
                         }
                     }
@@ -339,12 +341,21 @@ namespace OneDriveDaily
             return files;
         }
 
-        private static bool EndsWithSaurus(int num)
+        private bool CheckDate(DateTime startDate, DateTime endDate, DateTime dateCompare, FileAttributes fileAttributes, bool checkCloud)
         {
-            if (num == 36867)
-                return true;
+            if (checkCloud)
+            {
+                if (dateCompare >= _prevDate || (dateCompare.Day >= startDate.Day && dateCompare.Month >= startDate.Month && dateCompare.Day < endDate.Day && dateCompare.Month <= endDate.Month))
+                    return fileAttributes != (FileAttributes)5242912;
+            }
+            else
+            {
+                if (dateCompare.Day >= startDate.Day && dateCompare.Month >= startDate.Month && dateCompare.Day < endDate.Day && dateCompare.Month <= endDate.Month)
+                    return true;
+            }
             return false;
         }
+
 
         private void Frank_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -371,6 +382,7 @@ namespace OneDriveDaily
         private void Image_KeyDown(object sender, KeyEventArgs e)
         {
             var name = "";
+            if(IsLoading) return;
 
             if (e.Key == Key.Enter)
             {
@@ -580,6 +592,7 @@ namespace OneDriveDaily
 
         private void Next_Click(object sender, RoutedEventArgs e)
         {
+            IsLoading = true;
             TestyTest item = null;
             if (m_curPage < m_arrPages)
             {
@@ -614,6 +627,7 @@ namespace OneDriveDaily
                 window.Show();
                 Test.ScrollIntoView(m_arrFiles[0]);
             }
+            IsLoading = false;
         }
 
         private void Refresh_Click(object sender, RoutedEventArgs e)
