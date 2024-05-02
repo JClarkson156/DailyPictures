@@ -32,7 +32,7 @@ namespace OneDriveDaily
 
     public class TestyTest
     {
-        public TestyTest(TestyTest2 uri, FontWeight weight)
+        public TestyTest(TestyTest2 uri, FontWeight weight, SolidColorBrush foreground)
         {
             ImageUri = uri.Name;
             Size = uri.Size + " KB";
@@ -46,6 +46,7 @@ namespace OneDriveDaily
                 temp = null;
             }
             catch { }
+            Foreground = foreground;
         }
 
         public string ImageUri { get; set; }
@@ -57,6 +58,8 @@ namespace OneDriveDaily
         public byte[] Image { get; set; }
 
         public FontWeight Weight { get; set; }
+
+        public SolidColorBrush Foreground { get; set; }
 
         public string Date { get; set; }
     }
@@ -103,6 +106,9 @@ namespace OneDriveDaily
                 decimal value = Math.Ceiling(maxAmount / _numberPerRow);
                 maxAmount = value * _numberPerRow;
             }
+
+            _black.Freeze();
+            _red.Freeze();
 
             ChooseFiles();
         }
@@ -204,6 +210,9 @@ namespace OneDriveDaily
         private string  _strFolders = String.Empty;
         private int _numberPerRow;
         private bool IsLoading = false;
+        private SolidColorBrush _black = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0,0,0));
+        private SolidColorBrush _red = new SolidColorBrush(System.Windows.Media.Color.FromRgb(255,0,0));
+
         private void ChooseFiles()
         {
             var arrFiles = new List<TestyTest2>();
@@ -242,7 +251,7 @@ namespace OneDriveDaily
 
             foreach (var item in arrFiles)
             {
-                m_arrFiles.Add(new TestyTest(item, FontWeights.Normal));
+                m_arrFiles.Add(new TestyTest(item, FontWeights.Normal, Regex.Match(item.Name, "[(][0-9]+[)]").Success ? _red : _black));
 
                 if (m_arrFiles.Count == maxAmount)
                     break;
@@ -401,7 +410,7 @@ namespace OneDriveDaily
                 m_arrFiles2.RemoveAt(m_arrFiles2.FindIndex(m_curPage0 * (int)maxAmount, r => r.Name == item.ImageUri));
                 if (m_arrFiles2.Count >= (m_curPage0 * (int)maxAmount) + (int)maxAmount)
                 {
-                    m_arrFiles.Add(new TestyTest(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1], FontWeights.Bold));
+                    m_arrFiles.Add(new TestyTest(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1], FontWeights.Bold, Regex.Match(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1].Name, "[(][0-9]+[)]").Success ? _red : _black));
 
                 }
                 else
@@ -573,7 +582,7 @@ namespace OneDriveDaily
                     item = null;
                     try
                     {
-                        item = new TestyTest(m_arrFiles2[i], FontWeights.Normal);
+                        item = new TestyTest(m_arrFiles2[i], FontWeights.Normal, Regex.Match(m_arrFiles2[i].Name, "[(][0-9]+[)]").Success ? _red : _black);
                     }
                     catch { }
                     if (item != null)
@@ -607,7 +616,7 @@ namespace OneDriveDaily
                     item = null;
                     try
                     {
-                        item = new TestyTest(m_arrFiles2[i], FontWeights.Normal);
+                        item = new TestyTest(m_arrFiles2[i], FontWeights.Normal, Regex.Match(m_arrFiles2[i].Name, "[(][0-9]+[)]").Success ? _red : _black);
                     }
                     catch { }
                     if (item != null)
@@ -687,7 +696,7 @@ namespace OneDriveDaily
                 item = null;
                 try
                 {
-                    item = new TestyTest(m_arrFiles2[i], FontWeights.Normal);
+                    item = new TestyTest(m_arrFiles2[i], FontWeights.Normal, Regex.Match(m_arrFiles2[i].Name, "[(][0-9]+[)]").Success ? _red : _black);
                 }
                 catch { }
                 if (item != null)
