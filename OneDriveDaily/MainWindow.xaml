@@ -21,14 +21,16 @@
             <ListView.ItemTemplate >
                 <DataTemplate>
                     <StackPanel HorizontalAlignment="Left" Orientation="Vertical">
-                        <Image Source="{Binding Image, IsAsync=True}" KeyDown="Image_KeyDown"  MouseUp="Frank_MouseDown" Height="300" MaxHeight="300" Width="300">
+                        <Image Source="{Binding Path=Image, IsAsync=True, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}" KeyDown="Image_KeyDown"  MouseUp="Frank_MouseDown" Height="300" MaxHeight="300" Width="300"/>
+                            <!-- Image.Source>
+                                <BitmapImage CacheOption="OnDemand" DecodePixelWidth="300" DecodePixelHeight="300" UriSource="{Binding Image2, IsAsync=True}"/>
+                            </Image.Source -->
                             <!-- SelectedValuePath="ImageUri"  SelectedValue="{Binding item2}" SelectedIndex="{Binding index}" SelectedItem="{Binding item}" Image.Source>
                                 <BitmapImage UriSource="{Binding item.Image}" CacheOption="OnLoad"/>
                             </Image.Source -->
-                        </Image>
                         <TextBlock FontWeight="{Binding Weight}" MaxWidth="300" TextWrapping="Wrap" Text="{Binding ImageUri}"/>
                         <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                            <TextBlock FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Resolution}"/>
+                            <TextBlock FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Resolution, IsAsync=True, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"/>
                             <TextBlock Text=" - "/>
                             <TextBlock FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Size}"/>
                         </StackPanel>
