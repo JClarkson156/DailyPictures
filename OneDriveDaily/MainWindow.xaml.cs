@@ -551,7 +551,7 @@ namespace OneDriveDaily
                     {
                         index = LastIndex;
                         if (m_curPage < m_arrPages)
-                            Next_Click(null, null);
+                            await Task.Run(() => Next_Click(null, null));
                     }
 
                     index++;
@@ -690,7 +690,7 @@ namespace OneDriveDaily
                     catch { }
                     if (item != null)
                         m_arrFiles.Add(item);
-                    counter++;
+                    //counter++;
 
                     if (m_arrFiles.Count == maxAmount || counter == maxAmount)
                         break;
@@ -752,6 +752,7 @@ namespace OneDriveDaily
                 {
                     this.Test.SelectedItem = m_arrFiles[0];
                     index = 0;
+                    LastIndex = 0;
                     item = m_arrFiles[index];
                     item2 = this.m_arrFiles[0].ImageUri;
                     if (window == null)
@@ -837,7 +838,7 @@ namespace OneDriveDaily
                 catch { }
                 if (item != null)
                     m_arrFiles.Add(item);
-                counter++;
+                //counter++;
 
                 if (m_arrFiles.Count == maxAmount || counter == maxAmount)
                     break;
