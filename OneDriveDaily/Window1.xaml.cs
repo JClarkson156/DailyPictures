@@ -61,7 +61,7 @@ namespace OneDriveDaily
 
         }
 
-        public void Update(string stuff)
+        public void Update(string stuff, bool d = true)
         {
             try
             {
@@ -71,7 +71,8 @@ namespace OneDriveDaily
             {
                 BetterStuff = null;
             }
-            OnPropertyChanged(nameof(BetterStuff)); 
+            if (d)
+                OnPropertyChanged(nameof(BetterStuff));
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)

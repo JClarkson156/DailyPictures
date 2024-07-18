@@ -12,7 +12,7 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="50" />
         </Grid.RowDefinitions>
-        <ListView  Background="#8768B4" Grid.Row="0" ItemsSource="{Binding m_arrFiles, UpdateSourceTrigger=PropertyChanged}" PreviewKeyDown="Image_KeyDown" Name="Test">
+        <ListView ScrollViewer.CanContentScroll="True" Background="#8768B4" Grid.Row="0" ItemsSource="{Binding m_arrFiles, UpdateSourceTrigger=PropertyChanged}" PreviewKeyDown="Image_KeyDown" Name="Test">
             <ListView.ItemsPanel>
                 <ItemsPanelTemplate>
                     <WrapPanel Margin="10" Width="{Binding MaxWidth}" />

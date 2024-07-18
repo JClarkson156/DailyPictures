@@ -18,6 +18,10 @@ using System.Globalization;
 using System.Threading;
 using System.Windows.Threading;
 using System.Threading.Tasks;
+using System.Diagnostics.Metrics;
+using System.Reflection;
+using static System.Net.Mime.MediaTypeNames;
+using System.Windows.Shell;
 
 namespace OneDriveDaily
 {
@@ -80,21 +84,8 @@ namespace OneDriveDaily
             }
         }*/
 
-        private int count = 0;
-        public async void LoadImage()
-        {
-            var image = await File.ReadAllBytesAsync(ImageUri);
-            var temp = BitmapFrame.Create(new MemoryStream(image), BitmapCreateOptions.DelayCreation, BitmapCacheOption.None);
-            var resolution = $"{temp.PixelWidth} x {temp.PixelHeight}";
-            temp = null;
-
-            Dispatcher.CurrentDispatcher.Invoke(DispatcherPriority.Normal, new Action(() =>
-            {
-                count++;
-                Image = image;
-                Resolution = resolution;
-            }));
-        }
+        public int count = 0;
+        
 
 
         public FontWeight Weight { get; set; }
@@ -253,7 +244,7 @@ namespace OneDriveDaily
         private SolidColorBrush _black = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0,0,0));
         private SolidColorBrush _red = new SolidColorBrush(System.Windows.Media.Color.FromRgb(255,0,0));
 
-        private void ChooseFiles()
+        private async Task ChooseFiles()
         {
             var arrFiles = new List<TestyTest2>();
 
@@ -289,16 +280,57 @@ namespace OneDriveDaily
             m_arrPages = (int)Math.Ceiling(arrFiles.Count / maxAmount);
             m_totalPages = arrFiles.Count;
 
+            var counter = 0;
             foreach (var item in arrFiles)
             {
                 var img = new TestyTest(item, FontWeights.Normal, Regex.Match(item.Name, "[(][0-9]+[)]").Success ? _red : _black);
-                Task.Run(() => { img.LoadImage(); OnPropertyChanged(nameof(img)); OnPropertyChanged(nameof(m_arrFiles)); });
+                //_ = Task.Run(async() => 
+                //{ 
+                    await LoadImage(img); 
+                    //OnPropertyChanged(nameof(img)); 
+                    //OnPropertyChanged(nameof(m_arrFiles));
+                //});
                 m_arrFiles.Add(img);
-                
+                //counter++;
 
-                if (m_arrFiles.Count == maxAmount)
+                if (m_arrFiles.Count == maxAmount || counter == maxAmount)
                     break;
             }
+            OnPropertyChanged(nameof(m_arrFiles));
+        }
+
+        public async Task LoadImage(TestyTest img)
+        {
+            var image = await File.ReadAllBytesAsync(img.ImageUri);
+            var temp = BitmapFrame.Create(new MemoryStream(image), BitmapCreateOptions.DelayCreation, BitmapCacheOption.None);
+            var resolution = $"{temp.PixelWidth} x {temp.PixelHeight}";
+            temp = null;
+
+            img.Image = image;
+            img.Resolution = resolution;
+
+            //this.Dispatcher.BeginInvoke((Action)( async() =>
+            //{
+            //    img.Image = image;
+            //    img.Resolution = resolution;
+            //    m_arrFiles.Add(img);
+
+            if (m_arrFiles.Count == 1)
+            {
+                this.Test.SelectedItem = img;
+                index = 0;
+                item = img;
+                item2 = img.ImageUri;
+                if (window == null)
+                {
+                    window = new Window1(item2);
+                }
+                window.Update(img.ImageUri);
+                window.Show();
+                Test.Focus();
+                Test.ScrollIntoView(img);
+            }
+            //}));
         }
 
         public void LoadData()
@@ -431,7 +463,7 @@ namespace OneDriveDaily
         int LastIndex = 0;
         int number = 0;
 
-        private void Image_KeyDown(object sender, KeyEventArgs e)
+        private async void Image_KeyDown(object sender, KeyEventArgs e)
         {
             var name = "";
             if(IsLoading) return;
@@ -454,7 +486,12 @@ namespace OneDriveDaily
                 if (m_arrFiles2.Count >= (m_curPage0 * (int)maxAmount) + (int)maxAmount)
                 {
                     var img = new TestyTest(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1], FontWeights.Bold, Regex.Match(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1].Name, "[(][0-9]+[)]").Success ? _red : _black);
-                    Task.Run(() => { img.LoadImage(); OnPropertyChanged(nameof(img)); OnPropertyChanged(nameof(m_arrFiles)); });
+                    //_ = Task.Run(async() => 
+                    //{ 
+                        await LoadImage(img); 
+                        //OnPropertyChanged(nameof(img)); 
+                        //OnPropertyChanged(nameof(m_arrFiles)); 
+                    //});
                     m_arrFiles.Add(img);
                 }
                 else
@@ -625,7 +662,7 @@ namespace OneDriveDaily
             e.Handled = true;
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private async void Button_Click(object sender, RoutedEventArgs e)
         {
             TestyTest item = null;
             if (m_curPage0 > 0)
@@ -633,6 +670,7 @@ namespace OneDriveDaily
                 m_nDeletedCurPage = 0;
                 m_curPage--;
                 m_curPage0--;
+                var counter = 0;
                 m_arrFiles = new ObservableCollection<TestyTest>();
                 for (int i = m_curPage0 * (int)maxAmount; i < m_arrFiles2.Count; i++)
                 {
@@ -640,26 +678,37 @@ namespace OneDriveDaily
                     try
                     {
                         var tempItem = new TestyTest(m_arrFiles2[i], FontWeights.Normal, Regex.Match(m_arrFiles2[i].Name, "[(][0-9]+[)]").Success ? _red : _black);
-                        Task.Run(() => { tempItem.LoadImage(); OnPropertyChanged(nameof(tempItem)); OnPropertyChanged(nameof(m_arrFiles)); });
+                        //_ = Task.Run(async () =>
+                        //{
+                            await LoadImage(tempItem);
+                            //OnPropertyChanged(nameof(tempItem));
+                            //OnPropertyChanged(nameof(m_arrFiles));
+                        //});
                         item = tempItem;
 
                     }
                     catch { }
                     if (item != null)
                         m_arrFiles.Add(item);
+                    counter++;
 
-                    if (m_arrFiles.Count == (int)maxAmount)
+                    if (m_arrFiles.Count == maxAmount || counter == maxAmount)
                         break;
                 }
+                
                 OnPropertyChanged(nameof(m_arrFiles));
                 OnPropertyChanged(nameof(m_curPage));
                 OnPropertyChanged(nameof(m_nDeletedCurPage));
-                this.Test.SelectedItem = m_arrFiles[0];
-                Test.ScrollIntoView(m_arrFiles[0]);
+
+                if (m_arrFiles.Count > 0)
+                {
+                    this.Test.SelectedItem = m_arrFiles[0];
+                    Test.ScrollIntoView(m_arrFiles[0]);
+                }
             }
         }
 
-        private void Next_Click(object sender, RoutedEventArgs e)
+        private async void Next_Click(object sender, RoutedEventArgs e)
         {
             IsLoading = true;
             TestyTest item = null;
@@ -671,42 +720,53 @@ namespace OneDriveDaily
                 if (m_curPage == m_arrPages)
                     SaveData();
                 m_arrFiles = new ObservableCollection<TestyTest>();
+                var counter = 0;
                 for (int i = m_curPage0 * (int)maxAmount; i < m_arrFiles2.Count; i++)
                 {
                     item = null;
                     try
                     {
                         var tempItem = new TestyTest(m_arrFiles2[i], FontWeights.Normal, Regex.Match(m_arrFiles2[i].Name, "[(][0-9]+[)]").Success ? _red : _black);
-                        Task.Run(() => { tempItem.LoadImage(); OnPropertyChanged(nameof(tempItem)); OnPropertyChanged(nameof(m_arrFiles)); });
+                        tempItem.count = counter;
+                        //_ = Task.Run(async () => 
+                        //{ 
+                            await LoadImage(tempItem); 
+                            //OnPropertyChanged(nameof(tempItem)); 
+                            //OnPropertyChanged(nameof(m_arrFiles));
+                        //});
                         item = tempItem;
 
                     }
                     catch { }
                     if (item != null)
                         m_arrFiles.Add(item);
+                    counter++;
 
-                    if (m_arrFiles.Count == maxAmount)
+                    if (m_arrFiles.Count == maxAmount || counter == maxAmount)
                         break;
                 }
                 OnPropertyChanged(nameof(m_arrFiles));
                 OnPropertyChanged(nameof(m_nDeletedCurPage));
                 OnPropertyChanged(nameof(m_curPage));
-                this.Test.SelectedItem = m_arrFiles[0];
-                index = 0;
-                item = m_arrFiles[index];
-                item2 = this.m_arrFiles[0].ImageUri;
-                if (window == null)
+                if (m_arrFiles.Count > 0)
                 {
-                    window = new Window1(item2);
+                    this.Test.SelectedItem = m_arrFiles[0];
+                    index = 0;
+                    item = m_arrFiles[index];
+                    item2 = this.m_arrFiles[0].ImageUri;
+                    if (window == null)
+                    {
+                        window = new Window1(item2);
+                    }
+                    window.Update(m_arrFiles[0].ImageUri);
+                    window.Show();
+                    Test.ScrollIntoView(m_arrFiles[0]);
                 }
-                window.Update(m_arrFiles[0].ImageUri);
-                window.Show();
-                Test.ScrollIntoView(m_arrFiles[0]);
             }
             IsLoading = false;
         }
 
-        private void Refresh_Click(object sender, RoutedEventArgs e)
+        private async void Refresh_Click(object sender, RoutedEventArgs e)
         {
             for(var i = 0; i< m_arrFiles2.Count;)
             {
@@ -756,6 +816,7 @@ namespace OneDriveDaily
             if (m_curPage == m_arrPages)
                 SaveData();
 
+            var counter = 0;
             m_arrFiles = new ObservableCollection<TestyTest>();
 
             for (int i = m_curPage0 * (int)maxAmount; i < m_arrFiles2.Count; i++)
@@ -764,15 +825,21 @@ namespace OneDriveDaily
                 try
                 {
                     var tempItem = new TestyTest(m_arrFiles2[i], FontWeights.Normal, Regex.Match(m_arrFiles2[i].Name, "[(][0-9]+[)]").Success ? _red : _black);
-                    Task.Run(() => { tempItem.LoadImage(); OnPropertyChanged(nameof(tempItem)); OnPropertyChanged(nameof(m_arrFiles)); });
+                    //_ = Task.Run(async() =>
+                    //{
+                        await LoadImage(tempItem);
+                        //OnPropertyChanged(nameof(tempItem));
+                        //OnPropertyChanged(nameof(m_arrFiles));
+                    //});
                     item = tempItem;
 
                 }
                 catch { }
                 if (item != null)
                     m_arrFiles.Add(item);
+                counter++;
 
-                if (m_arrFiles.Count == maxAmount)
+                if (m_arrFiles.Count == maxAmount || counter == maxAmount)
                     break;
             }
 
