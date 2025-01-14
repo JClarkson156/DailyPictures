@@ -9,10 +9,24 @@
         Title="MainWindow" Height="900" Width="1440">
     <Grid Background="#8768B4">
         <Grid.RowDefinitions>
+            <RowDefinition Height="50" />
             <RowDefinition Height="*" />
             <RowDefinition Height="50" />
         </Grid.RowDefinitions>
-        <ListView ScrollViewer.CanContentScroll="True" Background="#8768B4" Grid.Row="0" ItemsSource="{Binding m_arrFiles, UpdateSourceTrigger=PropertyChanged}" PreviewKeyDown="Image_KeyDown" Name="Test">
+
+        <StackPanel Orientation="Horizontal">
+
+            <Border BorderThickness="1" BorderBrush="Black" Margin="10" Cursor="Hand" MouseDown="Border_MouseDown">
+                <TextBlock Margin="5" Text="Main"/>
+            </Border>
+
+            <Border BorderThickness="1" BorderBrush="Black" Margin="10" Cursor="Hand" MouseDown="Border_MouseDown_1">
+                <TextBlock Margin="5" Text="This Month"/>
+            </Border>
+            
+        </StackPanel>
+
+        <ListView ScrollViewer.CanContentScroll="True" Background="#8768B4" Grid.Row="1" ItemsSource="{Binding m_arrFiles, UpdateSourceTrigger=PropertyChanged}" PreviewKeyDown="Image_KeyDown" Name="Test">
             <ListView.ItemsPanel>
                 <ItemsPanelTemplate>
                     <WrapPanel Margin="10" Width="{Binding MaxWidth}" />
@@ -22,24 +36,25 @@
                 <DataTemplate>
                     <StackPanel HorizontalAlignment="Left" Orientation="Vertical">
                         <Image Source="{Binding Path=Image, IsAsync=True, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}" KeyDown="Image_KeyDown"  MouseUp="Frank_MouseDown" Height="300" MaxHeight="300" Width="300"/>
-                            <!-- Image.Source>
-                                <BitmapImage CacheOption="OnDemand" DecodePixelWidth="300" DecodePixelHeight="300" UriSource="{Binding Image2, IsAsync=True}"/>
-                            </Image.Source -->
-                            <!-- SelectedValuePath="ImageUri"  SelectedValue="{Binding item2}" SelectedIndex="{Binding index}" SelectedItem="{Binding item}" Image.Source>
-                                <BitmapImage UriSource="{Binding item.Image}" CacheOption="OnLoad"/>
-                            </Image.Source -->
-                        <TextBlock FontWeight="{Binding Weight}" MaxWidth="300" TextWrapping="Wrap" Text="{Binding ImageUri}"/>
+                        <!-- Image.Source>
+                     <BitmapImage CacheOption="OnDemand" DecodePixelWidth="300" DecodePixelHeight="300" UriSource="{Binding Image2, IsAsync=True}"/>
+                 </Image.Source -->
+                        <!-- SelectedValuePath="ImageUri"  SelectedValue="{Binding item2}" SelectedIndex="{Binding index}" SelectedItem="{Binding item}" Image.Source>
+                     <BitmapImage UriSource="{Binding item.Image}" CacheOption="OnLoad"/>
+                 </Image.Source -->
+                        <TextBlock Foreground="{Binding Foreground}" FontWeight="{Binding Weight}" MaxWidth="300" TextWrapping="Wrap" Text="{Binding ImageUri}"/>
                         <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                            <TextBlock FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Resolution, IsAsync=True, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"/>
-                            <TextBlock Text=" - "/>
-                            <TextBlock FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Size}"/>
+                            <TextBlock Foreground="{Binding Foreground}" FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Resolution, IsAsync=True, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Foreground="{Binding Foreground}" Text=" - "/>
+                            <TextBlock Foreground="{Binding Foreground}" FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Size}"/>
                         </StackPanel>
-                        <TextBlock FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Date}"/>
+                        <TextBlock Foreground="{Binding Foreground}" FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Date}"/>
                     </StackPanel>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
-        <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Row="1" Orientation="Horizontal">
+
+        <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Row="2" Orientation="Horizontal">
             <Button Width="50" Height="30" Name="Previous" Click="Button_Click">Previous</Button>
             <Button Width="50" Height="30" Name="Next" Click="Next_Click">Next</Button>
 

@@ -58,7 +58,6 @@ namespace OneDriveDaily
 
         public string Size { get; set; }
 
-        private object _image;
         public object Image { get; set; }
         /*{
             get
@@ -243,6 +242,7 @@ namespace OneDriveDaily
         private bool IsLoading = false;
         private SolidColorBrush _black = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0,0,0));
         private SolidColorBrush _red = new SolidColorBrush(System.Windows.Media.Color.FromRgb(255,0,0));
+        private bool _mainSelected = true;
 
         private async Task ChooseFiles()
         {
@@ -273,8 +273,19 @@ namespace OneDriveDaily
             }
 
             m_arrFiles = new ObservableCollection<TestyTest>();
-            arrFiles = arrFiles.OrderBy(c => System.IO.Path.GetFileNameWithoutExtension(c.Name)).ToList();
-            
+            arrFiles = arrFiles.OrderBy(c => System.IO.Path.GetFileNameWithoutExtension(c.Name), new MyComparer()).ToList();
+
+            var nowString = DateTime.Today.ToString("yyyy-M");
+
+            if (_mainSelected)
+            {
+                arrFiles = arrFiles.Where(x => !x.Name.Contains($"\\{nowString}\\")).ToList();
+            }
+            else
+            {
+                arrFiles = arrFiles.Where(x => x.Name.Contains($"\\{nowString}\\")).ToList();
+            }
+
             m_arrFiles2 = arrFiles;
 
             m_arrPages = (int)Math.Ceiling(arrFiles.Count / maxAmount);
@@ -301,36 +312,40 @@ namespace OneDriveDaily
 
         public async Task LoadImage(TestyTest img)
         {
-            var image = await File.ReadAllBytesAsync(img.ImageUri);
-            var temp = BitmapFrame.Create(new MemoryStream(image), BitmapCreateOptions.DelayCreation, BitmapCacheOption.None);
-            var resolution = $"{temp.PixelWidth} x {temp.PixelHeight}";
-            temp = null;
-
-            img.Image = image;
-            img.Resolution = resolution;
-
-            //this.Dispatcher.BeginInvoke((Action)( async() =>
-            //{
-            //    img.Image = image;
-            //    img.Resolution = resolution;
-            //    m_arrFiles.Add(img);
-
-            if (m_arrFiles.Count == 1)
+            try
             {
-                this.Test.SelectedItem = img;
-                index = 0;
-                item = img;
-                item2 = img.ImageUri;
-                if (window == null)
+                var image = await File.ReadAllBytesAsync(img.ImageUri);
+                var temp = BitmapFrame.Create(new MemoryStream(image), BitmapCreateOptions.DelayCreation, BitmapCacheOption.None);
+                var resolution = $"{temp.PixelWidth} x {temp.PixelHeight}";
+                temp = null;
+
+                img.Image = image;
+                img.Resolution = resolution;
+
+                //this.Dispatcher.BeginInvoke((Action)( async() =>
+                //{
+                //    img.Image = image;
+                //    img.Resolution = resolution;
+                //    m_arrFiles.Add(img);
+
+                if (m_arrFiles.Count == 1)
                 {
-                    window = new Window1(item2);
+                    this.Test.SelectedItem = img;
+                    index = 0;
+                    item = img;
+                    item2 = img.ImageUri;
+                    if (window == null)
+                    {
+                        window = new Window1(item2);
+                    }
+                    window.Update(img.ImageUri);
+                    window.Show();
+                    Test.Focus();
+                    Test.ScrollIntoView(img);
                 }
-                window.Update(img.ImageUri);
-                window.Show();
-                Test.Focus();
-                Test.ScrollIntoView(img);
+                //}));
             }
-            //}));
+            catch { }
         }
 
         public void LoadData()
@@ -443,6 +458,8 @@ namespace OneDriveDaily
 
         private void Frank_MouseDown(object sender, MouseButtonEventArgs e)
         {
+            if (this.IsLoading)
+                return;
             index = this.Test.SelectedIndex == -1 ? 0 : this.Test.SelectedIndex;
             LastIndex = index;
             item = (TestyTest)Test.Items[index];
@@ -462,200 +479,210 @@ namespace OneDriveDaily
 
         int LastIndex = 0;
         int number = 0;
+        int number2 = 0;
 
         private async void Image_KeyDown(object sender, KeyEventArgs e)
         {
             var name = "";
             if(IsLoading) return;
-
-            if (e.Key == Key.Enter)
+            try
             {
-                ProcessStartInfo startInfo = new ProcessStartInfo()
-                {
-                    UseShellExecute = true,
-                    FileName = item.ImageUri
-                };
-                Process.Start(startInfo);
-            }
-            else if (e.Key == Key.Delete)
-            {
-                var temp = item.ImageUri;
 
-                m_arrFiles.Remove(item);
-                m_arrFiles2.RemoveAt(m_arrFiles2.FindIndex(m_curPage0 * (int)maxAmount, r => r.Name == item.ImageUri));
-                if (m_arrFiles2.Count >= (m_curPage0 * (int)maxAmount) + (int)maxAmount)
+                if (e.Key == Key.Enter)
                 {
-                    var img = new TestyTest(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1], FontWeights.Bold, Regex.Match(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1].Name, "[(][0-9]+[)]").Success ? _red : _black);
-                    //_ = Task.Run(async() => 
-                    //{ 
-                        await LoadImage(img); 
+                    ProcessStartInfo startInfo = new ProcessStartInfo()
+                    {
+                        UseShellExecute = true,
+                        FileName = item.ImageUri
+                    };
+                    Process.Start(startInfo);
+                }
+                else if (e.Key == Key.Delete)
+                {
+                    var temp = item.ImageUri;
+
+                    m_arrFiles.Remove(item);
+                    m_arrFiles2.RemoveAt(m_arrFiles2.FindIndex(m_curPage0 * (int)maxAmount, r => r.Name == item.ImageUri));
+                    if (m_arrFiles2.Count >= (m_curPage0 * (int)maxAmount) + (int)maxAmount)
+                    {
+                        var img = new TestyTest(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1], FontWeights.Bold, Regex.Match(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1].Name, "[(][0-9]+[)]").Success ? _red : _black);
+                        //_ = Task.Run(async() => 
+                        //{ 
+                        await LoadImage(img);
                         //OnPropertyChanged(nameof(img)); 
                         //OnPropertyChanged(nameof(m_arrFiles)); 
-                    //});
-                    m_arrFiles.Add(img);
-                }
-                else
-                {
-                    SaveData();
-                }
-                m_arrPages = (int)Math.Ceiling(m_arrFiles2.Count / maxAmount);
-                m_totalPages = m_arrFiles2.Count;
+                        //});
+                        m_arrFiles.Add(img);
+                    }
+                    else
+                    {
+                        SaveData();
+                    }
+                    m_arrPages = (int)Math.Ceiling(m_arrFiles2.Count / maxAmount);
+                    m_totalPages = m_arrFiles2.Count;
 
-                m_nDeletedCurPage++;
-                m_nDeletedTotal++;
+                    m_nDeletedCurPage++;
+                    m_nDeletedTotal++;
 
-                OnPropertyChanged(nameof(m_arrFiles));
-                OnPropertyChanged(nameof(m_arrPages));
-                OnPropertyChanged(nameof(m_nDeletedCurPage));
-                OnPropertyChanged(nameof(m_nDeletedTotal));
-                OnPropertyChanged(nameof(m_totalPages));
+                    OnPropertyChanged(nameof(m_arrFiles));
+                    OnPropertyChanged(nameof(m_arrPages));
+                    OnPropertyChanged(nameof(m_nDeletedCurPage));
+                    OnPropertyChanged(nameof(m_nDeletedTotal));
+                    OnPropertyChanged(nameof(m_totalPages));
 
 #if DEBUG
 #else
-                Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(temp, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+                    Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(temp, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
 #endif
 
-                item = index < m_arrFiles.Count ? m_arrFiles[index] : m_arrFiles[m_arrFiles.Count - 1];
-                name = item.ImageUri;
-                this.Test.SelectedItem = item;
-                item2 = index < m_arrFiles.Count ? this.m_arrFiles[index].ImageUri : m_arrFiles[m_arrFiles.Count - 1].ImageUri;
-            }
-            else if (e.Key == Key.Left)
-            {
-                if (index == 0) { }
-                else
-                {
-                    if (Math.Abs(index - LastIndex) > 1)
-                        index = LastIndex;
-
-                    index--;
-                    item = m_arrFiles[index];
+                    item = index < m_arrFiles.Count ? m_arrFiles[index] : m_arrFiles[m_arrFiles.Count - 1];
                     name = item.ImageUri;
                     this.Test.SelectedItem = item;
-                    item2 = this.m_arrFiles[index].ImageUri;
-                    Test.ScrollIntoView(item);
-                    OnPropertyChanged(nameof(m_arrFiles));
-                    OnPropertyChanged(nameof(m_arrPages));
+                    item2 = index < m_arrFiles.Count ? this.m_arrFiles[index].ImageUri : m_arrFiles[m_arrFiles.Count - 1].ImageUri;
                 }
-            }
-            else if (e.Key == Key.Right)
-            {
-                if (index == this.Test.Items.Count - 1) 
+                else if (e.Key == Key.Left)
                 {
-                    if (m_curPage < m_arrPages)
-                        Next_Click(null, null);
-                }
-                else
-                {
-                    if (Math.Abs(index - LastIndex) > 1)
+                    if (index == 0) { }
+                    else
                     {
-                        index = LastIndex;
-                        if (m_curPage < m_arrPages)
-                            await Task.Run(() => Next_Click(null, null));
+                        if (Math.Abs(index - LastIndex) > 1)
+                            index = LastIndex;
+
+                        index--;
+                        item = m_arrFiles[index];
+                        name = item.ImageUri;
+                        this.Test.SelectedItem = item;
+                        item2 = this.m_arrFiles[index].ImageUri;
+                        Test.ScrollIntoView(item);
+                        OnPropertyChanged(nameof(m_arrFiles));
+                        OnPropertyChanged(nameof(m_arrPages));
                     }
-
-                    index++;
-                    item = m_arrFiles[index];
-                    name = item.ImageUri;
-                    this.Test.SelectedItem = item;
-                    item2 = this.m_arrFiles[index].ImageUri;
-                    Test.ScrollIntoView(item);
-                    OnPropertyChanged(nameof(m_arrPages));
-                    OnPropertyChanged(nameof(m_arrFiles));
                 }
-            }
-            else if (e.Key == Key.Up)
-            {
-                if (index <= _numberPerRow - 1) { }
-                else
+                else if (e.Key == Key.Right)
                 {
-                    if (Math.Abs(index - LastIndex) > _numberPerRow)
-                        index = LastIndex;
+                    if (index == this.Test.Items.Count - 1)
+                    {
+                        if (m_curPage < m_arrPages)
+                            Next_Click(null, null);
+                    }
+                    else
+                    {
+                        if (Math.Abs(index - LastIndex) > 1)
+                        {
+                            index = LastIndex;
+                            if (m_curPage < m_arrPages)
+                                await Task.Run(() => Next_Click(null, null));
+                        }
 
-                    index -= _numberPerRow;
-                    item = m_arrFiles[index];
-                    name = item.ImageUri;
-                    item2 = this.m_arrFiles[index].ImageUri;
-                    this.Test.SelectedItem = item;
-                    Test.ScrollIntoView(item);
-                    OnPropertyChanged(nameof(m_arrPages));
-                    OnPropertyChanged(nameof(m_arrFiles));
+                        index++;
+                        item = m_arrFiles[index];
+                        name = item.ImageUri;
+                        this.Test.SelectedItem = item;
+                        item2 = this.m_arrFiles[index].ImageUri;
+                        Test.ScrollIntoView(item);
+                        OnPropertyChanged(nameof(m_arrPages));
+                        OnPropertyChanged(nameof(m_arrFiles));
+                    }
                 }
-            }
-            else if (e.Key == Key.Down)
-            {
-                if (index >= this.Test.Items.Count - _numberPerRow) { }
-                else
+                else if (e.Key == Key.Up)
                 {
-                    if (Math.Abs(index - LastIndex) > _numberPerRow)
-                        index = LastIndex;
+                    if (index <= _numberPerRow - 1) { }
+                    else
+                    {
+                        if (Math.Abs(index - LastIndex) > _numberPerRow)
+                            index = LastIndex;
 
-                    index += _numberPerRow;
-                    item = m_arrFiles[index];
-                    name = item.ImageUri;
-                    this.Test.SelectedItem = item;
-                    item2 = this.m_arrFiles[index].ImageUri;
-                    Test.ScrollIntoView(item);
-                    OnPropertyChanged(nameof(m_arrPages));
-                    OnPropertyChanged(nameof(m_arrFiles));
+                        index -= _numberPerRow;
+                        item = m_arrFiles[index];
+                        name = item.ImageUri;
+                        item2 = this.m_arrFiles[index].ImageUri;
+                        this.Test.SelectedItem = item;
+                        Test.ScrollIntoView(item);
+                        OnPropertyChanged(nameof(m_arrPages));
+                        OnPropertyChanged(nameof(m_arrFiles));
+                    }
                 }
-            }
-            else if (e.Key == Key.F3)
-            {
-                File.Copy(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\Extensions\\Bah\\images\\background{number}.jpg", true);
-                number++;
-            }
-            else if (e.Key == Key.F1)
-            {
-                File.Copy(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\Extensions\\Bah3\\images\\background{number}.jpg", true);
-                number++;
-            }
-            else if (e.Key == Key.F11)
-            {
-                var fileInfo = new FileInfo(item.ImageUri);
-                File.Move(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.MyPictures)}\\Pictures\\Unsorted\\MoveToPhone\\" + fileInfo.Name, true);
-            }
-            else if (e.Key == Key.F9)
-            {
-                var fileInfo = new FileInfo(item.ImageUri);
-
-                //Will remove date metadata. But program doesn't check that so I don't think it matters so much.
-                //System.Drawing.Image image = System.Drawing.Image.FromFile(item.ImageUri);
-                //image.Save($"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\a{fileInfo.Name}", image.RawFormat);
-                
-                if (fileInfo.LastWriteTime > DateTime.Today.AddDays(-35) || fileInfo.Name.StartsWith("a")) { }
-                else
+                else if (e.Key == Key.Down)
                 {
-                    File.Copy(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\a" + fileInfo.Name, true);
-                    var newFileInfo = new FileInfo($"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\a" + fileInfo.Name);
-                    newFileInfo.CreationTime = DateTime.Now;
-                    newFileInfo.LastWriteTime = DateTime.Now;
+                    if (index >= this.Test.Items.Count - _numberPerRow) { }
+                    else
+                    {
+                        if (Math.Abs(index - LastIndex) > _numberPerRow)
+                            index = LastIndex;
+
+                        index += _numberPerRow;
+                        item = m_arrFiles[index];
+                        name = item.ImageUri;
+                        this.Test.SelectedItem = item;
+                        item2 = this.m_arrFiles[index].ImageUri;
+                        Test.ScrollIntoView(item);
+                        OnPropertyChanged(nameof(m_arrPages));
+                        OnPropertyChanged(nameof(m_arrFiles));
+                    }
+                }
+                else if (e.Key == Key.F3)
+                {
+                    File.Copy(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\Extensions\\Bah\\images\\background{number}.jpg", true);
+                    number++;
+                }
+                else if (e.Key == Key.F1)
+                {
+                    File.Copy(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\Extensions\\Bah3\\images\\background{number2}.jpg", true);
+                    number2++;
+                }
+                else if (e.Key == Key.F11)
+                {
+                    var fileInfo = new FileInfo(item.ImageUri);
+                    File.Move(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.MyPictures)}\\Pictures\\Unsorted\\MoveToPhone\\" + fileInfo.Name, true);
+                }
+                else if (e.Key == Key.F9)
+                {
+                    var fileInfo = new FileInfo(item.ImageUri);
+
+                    //Will remove date metadata. But program doesn't check that so I don't think it matters so much.
+                    //System.Drawing.Image image = System.Drawing.Image.FromFile(item.ImageUri);
+                    //image.Save($"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\a{fileInfo.Name}", image.RawFormat);
+
+                    if (fileInfo.LastWriteTime > DateTime.Today.AddDays(-35) || fileInfo.Name.StartsWith("a")) { }
+                    else
+                    {
+                        File.Copy(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\a" + fileInfo.Name, true);
+                        var newFileInfo = new FileInfo($"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\a" + fileInfo.Name);
+                        newFileInfo.CreationTime = DateTime.Now;
+                        newFileInfo.LastWriteTime = DateTime.Now;
+                    }
+                }
+                else if (e.Key == Key.F4)
+                {
+                    System.Drawing.Image image = System.Drawing.Image.FromFile(item.ImageUri);
+                    image.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                    image.Save($"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\Extensions\\Bah\\images\\background{number}.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+                    number++;
+                }
+
+                if (number > 6)
+                    number = 0;
+                if (number2 > 6)
+                    number2 = 0;
+
+
+                if (name.Length > 0)
+                {
+                    if (window == null || window.isClosed)
+                    {
+                        window = new Window1(name);
+                        window.Show();
+                    }
+                    else
+                    {
+                        window.Update(name);
+                        window.Show();
+                    }
                 }
             }
-            else if (e.Key == Key.F4)
+            catch (Exception ex)
             {
-                System.Drawing.Image image = System.Drawing.Image.FromFile(item.ImageUri);
-                image.RotateFlip(RotateFlipType.RotateNoneFlipX);
-                image.Save($"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\Extensions\\Bah\\images\\background{number}.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
-                number++;
-            }
-
-            if (number > 4)
-                number = 0;
-
-
-            if (name.Length > 0)
-            {
-                if (window == null || window.isClosed)
-                {
-                    window = new Window1(name);
-                    window.Show();
-                }
-                else
-                {
-                    window.Update(name);
-                    window.Show();
-                }
+                MessageBox.Show(ex.Message);
             }
 
             LastIndex = index;
@@ -791,9 +818,20 @@ namespace OneDriveDaily
                 arrFiles.AddRange(CountFiles(new DirectoryInfo(item.Trim()).GetFileSystemInfos()));
             }
 
-            arrFiles = arrFiles.OrderBy(c => System.IO.Path.GetFileNameWithoutExtension(c.Name)).ToList();
+            arrFiles = arrFiles.OrderBy(c => System.IO.Path.GetFileNameWithoutExtension(c.Name), new MyComparer()).ToList();
 
-            for(var i = 0; i< arrFiles.Count;)
+            var nowString = DateTime.Today.ToString("yyyy-M");
+
+            if (_mainSelected)
+            {
+                arrFiles = arrFiles.Where(x => !x.Name.Contains($"\\{nowString}\\")).ToList();
+            }
+            else
+            {
+                arrFiles = arrFiles.Where(x => x.Name.Contains($"\\{nowString}\\")).ToList();
+            }
+
+            for (var i = 0; i< arrFiles.Count;)
             {
                 var item = arrFiles[i];
 
@@ -840,12 +878,58 @@ namespace OneDriveDaily
                     m_arrFiles.Add(item);
                 //counter++;
 
-                if (m_arrFiles.Count == maxAmount || counter == maxAmount)
+                if (m_arrFiles.Count >= maxAmount || counter >= maxAmount)
                     break;
             }
 
             OnPropertyChanged(nameof(m_arrFiles));
-            OnPropertyChanged(nameof(m_curPage));
+            OnPropertyChanged(nameof(m_arrPages));
+            OnPropertyChanged(nameof(m_nDeletedCurPage));
+            OnPropertyChanged(nameof(m_nDeletedTotal));
+            OnPropertyChanged(nameof(m_totalPages));
+        }
+
+        private void Border_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (_mainSelected) return;
+
+            _mainSelected = true;
+
+            m_arrPages = 1;
+            m_totalPages = 1;
+            m_curPage = 1;
+            m_curPage0 = 0;
+            m_nDeletedCurPage = 0;
+            m_nDeletedTotal = 0;
+
+            ChooseFiles();
+
+            OnPropertyChanged(nameof(m_arrFiles));
+            OnPropertyChanged(nameof(m_arrPages));
+            OnPropertyChanged(nameof(m_nDeletedCurPage));
+            OnPropertyChanged(nameof(m_nDeletedTotal));
+            OnPropertyChanged(nameof(m_totalPages));
+        }
+
+        private void Border_MouseDown_1(object sender, MouseButtonEventArgs e)
+        {
+            if (!_mainSelected) return;
+
+            _mainSelected = false;
+
+            m_arrPages = 1;
+            m_totalPages = 1;
+            m_curPage = 1;
+            m_curPage0 = 0;
+            m_nDeletedCurPage = 0;
+            m_nDeletedTotal = 0;
+
+            ChooseFiles();
+
+            OnPropertyChanged(nameof(m_arrFiles));
+            OnPropertyChanged(nameof(m_arrPages));
+            OnPropertyChanged(nameof(m_nDeletedCurPage));
+            OnPropertyChanged(nameof(m_nDeletedTotal));
             OnPropertyChanged(nameof(m_totalPages));
         }
     }
