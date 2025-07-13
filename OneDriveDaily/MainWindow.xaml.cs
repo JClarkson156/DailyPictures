@@ -956,16 +956,23 @@ namespace OneDriveDaily
             var newDirectory = "F:\\Pictures\\Pictures";
             foreach (var file in m_arrFiles2)
             {
-                if (file.Name.Contains(newDirectory))
+                if (file.Name.Contains(newDirectory) || file.Name.Contains("Unsorted"))
                     continue;
+
+                var dateCreated = File.GetCreationTime(file.Name);
+                var dateEdited = File.GetLastWriteTime(file.Name);
 
                 var fileInfo = new FileInfo(file.Name);
                 var dateDirectory = fileInfo.Directory.Name;
                 if(!Directory.Exists(newDirectory + "\\" + dateDirectory))
                     Directory.CreateDirectory(newDirectory + "\\" + dateDirectory);
 
-                File.Move(file.Name, newDirectory + "\\" + dateDirectory + "\\" + fileInfo.Name);
-                
+                var newName = newDirectory + "\\" + dateDirectory + "\\" + fileInfo.Name;
+
+                File.Move(file.Name, newName);
+
+                File.SetCreationTime(newName, dateCreated);
+                File.SetLastWriteTime(newName, dateEdited);                
             }
         }
     }
