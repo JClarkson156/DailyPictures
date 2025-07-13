@@ -101,6 +101,7 @@ namespace OneDriveDaily
         public long Size { get; set; } = 0;
         public DateTime Date { get; set; }
         public string DateType { get; set; }
+        public bool CopiedImage { get; set; } = false;
     }
 
     public partial class MainWindow : Window, INotifyPropertyChanged
@@ -117,7 +118,6 @@ namespace OneDriveDaily
 
 
             LoadData();
-
 
             index = 0;
             m_arrPages = 1;
@@ -243,6 +243,8 @@ namespace OneDriveDaily
         private SolidColorBrush _black = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0,0,0));
         private SolidColorBrush _red = new SolidColorBrush(System.Windows.Media.Color.FromRgb(255,0,0));
         private bool _mainSelected = true;
+        private List<DateTime> datesToIgnore = new List<DateTime>() { new DateTime(2023,6,3) } ;
+        private List<DateTime> datesToIgnoreAcesss = new List<DateTime>() { new DateTime(2025,6,25) };
 
         private async Task ChooseFiles()
         {
@@ -279,11 +281,19 @@ namespace OneDriveDaily
 
             if (_mainSelected)
             {
-                arrFiles = arrFiles.Where(x => !x.Name.Contains($"\\{nowString}\\")).ToList();
+                arrFiles = arrFiles.Where(x => 
+                    !x.Name.Contains($"\\{nowString}\\") && 
+                    !(x.DateType == "Accessed" && datesToIgnoreAcesss.Contains(x.Date.Date)) &&
+                    !(x.CopiedImage)
+                ).ToList();
             }
             else
             {
-                arrFiles = arrFiles.Where(x => x.Name.Contains($"\\{nowString}\\")).ToList();
+                arrFiles = arrFiles.Where(x => 
+                    x.Name.Contains($"\\{nowString}\\") || 
+                    (x.DateType == "Accessed" && datesToIgnoreAcesss.Contains(x.Date.Date)) ||
+                    (x.CopiedImage)                    
+                ).ToList();
             }
 
             m_arrFiles2 = arrFiles;
@@ -410,13 +420,21 @@ namespace OneDriveDaily
 
                         if (CheckDate(startDate, endDate, dateEdited, (infos[i] as FileInfo).Attributes, false))
                         {
+                            var copiedImage = false;
+                            if ((infos[i] as FileInfo).Name.StartsWith("a") && !(infos[i] as FileInfo).FullName.Contains("Unsorted"))
+                                copiedImage = true;
                             //infos[i].LastAccessTime = DateTime.Now;
-                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateEdited, DateType = "Edited" });
+                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateEdited, DateType = "Edited", CopiedImage = copiedImage });
                         }
                         else if (CheckDate(startDate, endDate, dateCreated, (infos[i] as FileInfo).Attributes, false))
                         {
+                            var copiedImage = false;
+                            if (datesToIgnore.Contains(dateCreated.Date))
+                                continue;
+                            if ((infos[i] as FileInfo).Name.StartsWith("a") && !(infos[i] as FileInfo).FullName.Contains("Unsorted"))
+                                copiedImage = true;
                             //infos[i].LastAccessTime = DateTime.Now;
-                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateCreated, DateType = "Created" });
+                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateCreated, DateType = "Created", CopiedImage = copiedImage });
                         }
                         else if (CheckDate(startDate, endDate, dateAccessed, (infos[i] as FileInfo).Attributes, true))
                         {
@@ -824,11 +842,11 @@ namespace OneDriveDaily
 
             if (_mainSelected)
             {
-                arrFiles = arrFiles.Where(x => !x.Name.Contains($"\\{nowString}\\")).ToList();
+                arrFiles = arrFiles.Where(x => !x.Name.Contains($"\\{nowString}\\") && !(x.DateType == "Accessed" && datesToIgnoreAcesss.Contains(x.Date.Date))).ToList();
             }
             else
             {
-                arrFiles = arrFiles.Where(x => x.Name.Contains($"\\{nowString}\\")).ToList();
+                arrFiles = arrFiles.Where(x => x.Name.Contains($"\\{nowString}\\") || (x.DateType == "Accessed" && datesToIgnoreAcesss.Contains(x.Date.Date))).ToList();
             }
 
             for (var i = 0; i< arrFiles.Count;)
@@ -931,6 +949,24 @@ namespace OneDriveDaily
             OnPropertyChanged(nameof(m_nDeletedCurPage));
             OnPropertyChanged(nameof(m_nDeletedTotal));
             OnPropertyChanged(nameof(m_totalPages));
+        }
+
+        private void MoveVisible_Click(object sender, RoutedEventArgs e)
+        {
+            var newDirectory = "F:\\Pictures\\Pictures";
+            foreach (var file in m_arrFiles2)
+            {
+                if (file.Name.Contains(newDirectory))
+                    continue;
+
+                var fileInfo = new FileInfo(file.Name);
+                var dateDirectory = fileInfo.Directory.Name;
+                if(!Directory.Exists(newDirectory + "\\" + dateDirectory))
+                    Directory.CreateDirectory(newDirectory + "\\" + dateDirectory);
+
+                File.Move(file.Name, newDirectory + "\\" + dateDirectory + "\\" + fileInfo.Name);
+                
+            }
         }
     }
 }
