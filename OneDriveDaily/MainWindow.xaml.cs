@@ -243,8 +243,17 @@ namespace OneDriveDaily
         private SolidColorBrush _black = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0,0,0));
         private SolidColorBrush _red = new SolidColorBrush(System.Windows.Media.Color.FromRgb(255,0,0));
         private bool _mainSelected = true;
-        private List<DateTime> datesToIgnore = new List<DateTime>() { new DateTime(2023,6,3) } ;
-        private List<DateTime> datesToIgnoreAcesss = new List<DateTime>() { new DateTime(2025,6,25) };
+        private List<DateTime> datesToIgnore = new List<DateTime>() 
+        { 
+            new DateTime(2023,6,3),
+            new DateTime(2023,12,14)
+        } ;
+        private List<DateTime> datesToIgnoreAcesss = new List<DateTime>() 
+        { 
+            new DateTime(2025,6,25), 
+            new DateTime(2025,10,21),
+            new DateTime(2025,10,22)
+        };
 
         private async Task ChooseFiles()
         {
@@ -421,7 +430,7 @@ namespace OneDriveDaily
                         if (CheckDate(startDate, endDate, dateEdited, (infos[i] as FileInfo).Attributes, false))
                         {
                             var copiedImage = false;
-                            if ((infos[i] as FileInfo).Name.StartsWith("a") && !(infos[i] as FileInfo).FullName.Contains("Unsorted"))
+                            if ((infos[i] as FileInfo).Name.StartsWith("a"))
                                 copiedImage = true;
                             //infos[i].LastAccessTime = DateTime.Now;
                             files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateEdited, DateType = "Edited", CopiedImage = copiedImage });
@@ -431,15 +440,18 @@ namespace OneDriveDaily
                             var copiedImage = false;
                             if (datesToIgnore.Contains(dateCreated.Date))
                                 continue;
-                            if ((infos[i] as FileInfo).Name.StartsWith("a") && !(infos[i] as FileInfo).FullName.Contains("Unsorted"))
+                            if ((infos[i] as FileInfo).Name.StartsWith("a"))
                                 copiedImage = true;
                             //infos[i].LastAccessTime = DateTime.Now;
                             files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateCreated, DateType = "Created", CopiedImage = copiedImage });
                         }
                         else if (CheckDate(startDate, endDate, dateAccessed, (infos[i] as FileInfo).Attributes, true))
                         {
+                            var copiedImage = false;
+                            if ((infos[i] as FileInfo).Name.StartsWith("a") && CheckFolder((infos[i] as FileInfo).FullName))
+                                copiedImage = true;
                             //infos[i].LastAccessTime = DateTime.Now;
-                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateAccessed, DateType = "Accessed" });
+                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateAccessed, DateType = "Accessed", CopiedImage = copiedImage  });
                         }
 
                         if (startDate.Month == 2 && startDate.Day == 29)
@@ -456,6 +468,13 @@ namespace OneDriveDaily
                 }
             }
             return files;
+        }
+
+        private bool CheckFolder(string folder)
+        {
+            if (folder.Contains("Unsorted") && !(folder.Contains("MoveToPhone") || folder.Contains("PhoneFav")))
+                return true;
+            return false;
         }
 
         private bool CheckDate(DateTime startDate, DateTime endDate, DateTime dateCompare, FileAttributes fileAttributes, bool checkCloud)
@@ -505,13 +524,23 @@ namespace OneDriveDaily
             if(IsLoading) return;
             try
             {
-
-                if (e.Key == Key.Enter)
+                if (!Keyboard.IsKeyDown(Key.LeftShift) && e.Key == Key.Enter)
                 {
                     ProcessStartInfo startInfo = new ProcessStartInfo()
                     {
                         UseShellExecute = true,
                         FileName = item.ImageUri
+                    };
+                    Process.Start(startInfo);
+                }
+                else if (Keyboard.IsKeyDown(Key.LeftShift) && e.Key == Key.Enter)
+                {
+                    ProcessStartInfo startInfo = new ProcessStartInfo()
+                    {
+                        UseShellExecute = false,
+                        WorkingDirectory = "C:\\Program Files\\RawTherapee\\5.12",
+                        FileName = "C:\\Program Files\\RawTherapee\\5.12\\rawtherapee.exe",
+                        Arguments = item.ImageUri
                     };
                     Process.Start(startInfo);
                 }
@@ -661,7 +690,7 @@ namespace OneDriveDaily
                     //System.Drawing.Image image = System.Drawing.Image.FromFile(item.ImageUri);
                     //image.Save($"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\a{fileInfo.Name}", image.RawFormat);
 
-                    if (fileInfo.LastWriteTime > DateTime.Today.AddDays(-35) || fileInfo.Name.StartsWith("a")) { }
+                    if ((fileInfo.FullName.Contains("Unsorted") || fileInfo.FullName.Contains("camera roll") || fileInfo.Name.StartsWith("a")) && !fileInfo.FullName.Contains("PhoneFav")) { }
                     else
                     {
                         File.Copy(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\a" + fileInfo.Name, true);
@@ -842,11 +871,19 @@ namespace OneDriveDaily
 
             if (_mainSelected)
             {
-                arrFiles = arrFiles.Where(x => !x.Name.Contains($"\\{nowString}\\") && !(x.DateType == "Accessed" && datesToIgnoreAcesss.Contains(x.Date.Date))).ToList();
+                arrFiles = arrFiles.Where(x =>
+                    !x.Name.Contains($"\\{nowString}\\") &&
+                    !(x.DateType == "Accessed" && datesToIgnoreAcesss.Contains(x.Date.Date)) &&
+                    !(x.CopiedImage)
+                ).ToList();
             }
             else
             {
-                arrFiles = arrFiles.Where(x => x.Name.Contains($"\\{nowString}\\") || (x.DateType == "Accessed" && datesToIgnoreAcesss.Contains(x.Date.Date))).ToList();
+                arrFiles = arrFiles.Where(x =>
+                    x.Name.Contains($"\\{nowString}\\") ||
+                    (x.DateType == "Accessed" && datesToIgnoreAcesss.Contains(x.Date.Date)) ||
+                    (x.CopiedImage)
+                ).ToList();
             }
 
             for (var i = 0; i< arrFiles.Count;)
@@ -956,11 +993,12 @@ namespace OneDriveDaily
             var newDirectory = "F:\\Pictures\\Pictures";
             foreach (var file in m_arrFiles2)
             {
-                if (file.Name.Contains(newDirectory) || file.Name.Contains("Unsorted"))
+                if (file.Name.Contains(newDirectory) || file.Name.Contains("Unsorted") || file.Name.Contains("camera roll") || file.Name.Contains("Steam"))
                     continue;
-
+                
                 var dateCreated = File.GetCreationTime(file.Name);
                 var dateEdited = File.GetLastWriteTime(file.Name);
+                var dateAccessed = File.GetLastAccessTime(file.Name);
 
                 var fileInfo = new FileInfo(file.Name);
                 var dateDirectory = fileInfo.Directory.Name;
@@ -969,10 +1007,11 @@ namespace OneDriveDaily
 
                 var newName = newDirectory + "\\" + dateDirectory + "\\" + fileInfo.Name;
 
-                File.Move(file.Name, newName);
+                File.Move(file.Name, newName, true);
 
                 File.SetCreationTime(newName, dateCreated);
-                File.SetLastWriteTime(newName, dateEdited);                
+                File.SetLastWriteTime(newName, dateEdited);
+                File.SetLastAccessTime(newName, dateAccessed);
             }
         }
     }
