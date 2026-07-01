@@ -42,7 +42,7 @@
                         <!-- SelectedValuePath="ImageUri"  SelectedValue="{Binding item2}" SelectedIndex="{Binding index}" SelectedItem="{Binding item}" Image.Source>
                      <BitmapImage UriSource="{Binding item.Image}" CacheOption="OnLoad"/>
                  </Image.Source -->
-                        <TextBlock Foreground="{Binding Foreground}" FontWeight="{Binding Weight}" MaxWidth="300" TextWrapping="Wrap" Text="{Binding ImageUri}"/>
+                        <TextBlock Foreground="{Binding Foreground}" FontWeight="{Binding Weight}" MaxWidth="300" TextWrapping="Wrap" Text="{Binding ImageUri, IsAsync=True, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"/>
                         <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                             <TextBlock Foreground="{Binding Foreground}" FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Resolution, IsAsync=True, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"/>
                             <TextBlock Foreground="{Binding Foreground}" Text=" - "/>

@@ -246,13 +246,14 @@ namespace OneDriveDaily
         private List<DateTime> datesToIgnore = new List<DateTime>() 
         { 
             new DateTime(2023,6,3),
-            new DateTime(2023,12,14)
+            new DateTime(2023,12,14),
+            new DateTime(2025,06,25),
         } ;
         private List<DateTime> datesToIgnoreAcesss = new List<DateTime>() 
         { 
-            new DateTime(2025,6,25), 
             new DateTime(2025,10,21),
-            new DateTime(2025,10,22)
+            new DateTime(2025,10,22),
+
         };
 
         private async Task ChooseFiles()
@@ -430,7 +431,7 @@ namespace OneDriveDaily
                         if (CheckDate(startDate, endDate, dateEdited, (infos[i] as FileInfo).Attributes, false))
                         {
                             var copiedImage = false;
-                            if ((infos[i] as FileInfo).Name.StartsWith("a"))
+                            if (!infos[i].FullName.Contains("PhoneFav") && !infos[i].FullName.Contains("MoveToPhone") && (infos[i] as FileInfo).Name.StartsWith("a") && !Regex.Match(((infos[i] as FileInfo).Name), "[(][0-9]+[)]").Success)
                                 copiedImage = true;
                             //infos[i].LastAccessTime = DateTime.Now;
                             files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateEdited, DateType = "Edited", CopiedImage = copiedImage });
@@ -440,7 +441,7 @@ namespace OneDriveDaily
                             var copiedImage = false;
                             if (datesToIgnore.Contains(dateCreated.Date))
                                 continue;
-                            if ((infos[i] as FileInfo).Name.StartsWith("a"))
+                            if (!infos[i].FullName.Contains("PhoneFav") && !infos[i].FullName.Contains("MoveToPhone") && (infos[i] as FileInfo).Name.StartsWith("a") && !Regex.Match(((infos[i] as FileInfo).Name), "[(][0-9]+[)]").Success)
                                 copiedImage = true;
                             //infos[i].LastAccessTime = DateTime.Now;
                             files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateCreated, DateType = "Created", CopiedImage = copiedImage });
@@ -448,7 +449,7 @@ namespace OneDriveDaily
                         else if (CheckDate(startDate, endDate, dateAccessed, (infos[i] as FileInfo).Attributes, true))
                         {
                             var copiedImage = false;
-                            if ((infos[i] as FileInfo).Name.StartsWith("a") && CheckFolder((infos[i] as FileInfo).FullName))
+                            if (!infos[i].FullName.Contains("PhoneFav") && !infos[i].FullName.Contains("MoveToPhone") && infos[i].FullName.Contains("Unsorted") && (infos[i] as FileInfo).Name.StartsWith("a"))
                                 copiedImage = true;
                             //infos[i].LastAccessTime = DateTime.Now;
                             files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateAccessed, DateType = "Accessed", CopiedImage = copiedImage  });
@@ -477,18 +478,19 @@ namespace OneDriveDaily
             return false;
         }
 
-        private bool CheckDate(DateTime startDate, DateTime endDate, DateTime dateCompare, FileAttributes fileAttributes, bool checkCloud)
+        private bool CheckDate(DateTime startDate, DateTime endDate, DateTime dateCompare, FileAttributes fileAttributes, bool checkAccessed)
         {
-            if (checkCloud)
-            {
-                if (dateCompare >= _prevDate || (dateCompare.Day >= startDate.Day && dateCompare.Month >= startDate.Month && dateCompare.Day < endDate.Day && dateCompare.Month <= endDate.Month))
-                    return fileAttributes != (FileAttributes)5242912;
-            }
-            else
-            {
-                if (dateCompare.Day >= startDate.Day && dateCompare.Month >= startDate.Month && dateCompare.Day < endDate.Day && dateCompare.Month <= endDate.Month)
+            DateTime newDateCompare;
+            if (checkAccessed)
+                if (dateCompare > _prevDate)
                     return true;
-            }
+
+            if(dateCompare.Month == 2 && dateCompare.Day == 29 && DateTime.DaysInMonth(startDate.Year, 2) != 29)
+                newDateCompare = new DateTime(startDate.Year, dateCompare.Month, 28, dateCompare.Hour, dateCompare.Minute, dateCompare.Second);
+            else
+                newDateCompare = new DateTime(startDate.Year, dateCompare.Month, dateCompare.Day, dateCompare.Hour, dateCompare.Minute, dateCompare.Second);
+            if (startDate < newDateCompare && newDateCompare < endDate)
+                return true;
             return false;
         }
 
@@ -524,7 +526,7 @@ namespace OneDriveDaily
             if(IsLoading) return;
             try
             {
-                if (!Keyboard.IsKeyDown(Key.LeftShift) && e.Key == Key.Enter)
+                if (e.Key == Key.Enter)
                 {
                     ProcessStartInfo startInfo = new ProcessStartInfo()
                     {
@@ -533,16 +535,41 @@ namespace OneDriveDaily
                     };
                     Process.Start(startInfo);
                 }
-                else if (Keyboard.IsKeyDown(Key.LeftShift) && e.Key == Key.Enter)
+                else if (Keyboard.IsKeyDown(Key.LeftCtrl))
                 {
-                    ProcessStartInfo startInfo = new ProcessStartInfo()
+                    int key = (int)e.Key;
+                    if (key == 62 || (key >= 35 && key <= 43) || (key >= 75 && key <= 83))
                     {
-                        UseShellExecute = false,
-                        WorkingDirectory = "C:\\Program Files\\RawTherapee\\5.12",
-                        FileName = "C:\\Program Files\\RawTherapee\\5.12\\rawtherapee.exe",
-                        Arguments = item.ImageUri
-                    };
-                    Process.Start(startInfo);
+                        var key2 = e.Key.ToString();
+                        if (key2.StartsWith("D"))
+                            key2 = key2.Substring(1);
+                        if (key2.StartsWith("NumPad"))
+                            key2 = key2.Substring(6);
+
+                        var fileInfo = new FileInfo(item.ImageUri);
+                        var newFileName = fileInfo.Directory + "\\" + Regex.Replace(Path.GetFileNameWithoutExtension(item.ImageUri), @"\s*\([0-9]+\)", "") + key2 + fileInfo.Extension;
+
+                        if (!File.Exists(newFileName))
+                        {
+                            File.Move(item.ImageUri, newFileName);
+                            //item.ImageUri = newFileName;
+                            var newItem = m_arrFiles2[(int)(m_curPage0 * maxAmount) + index];
+                            newItem.Name = newFileName;
+
+                            var newItem2 = new TestyTest(newItem, FontWeights.Normal, Regex.Match(newItem.Name, "[(][0-9]+[)]").Success ? _red : _black);
+                            await LoadImage(newItem2);
+                            m_arrFiles[index] = newItem2;
+                        }
+                        else
+                        {
+                            //Ideally need a compare file dialog here
+                            //but well that would take ages and it's way easier to just open the file.
+                            MessageBox.Show("File already exists");
+                        }
+
+                        OnPropertyChanged(nameof(m_arrFiles));
+                        OnPropertyChanged(nameof(m_arrPages));
+                    }
                 }
                 else if (e.Key == Key.Delete)
                 {
@@ -677,10 +704,21 @@ namespace OneDriveDaily
                     File.Copy(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\Extensions\\Bah3\\images\\background{number2}.jpg", true);
                     number2++;
                 }
-                else if (e.Key == Key.F11)
+                else if (e.Key == Key.F5)
                 {
-                    var fileInfo = new FileInfo(item.ImageUri);
-                    File.Move(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.MyPictures)}\\Pictures\\Unsorted\\MoveToPhone\\" + fileInfo.Name, true);
+                    File.Copy(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\Extensions\\Bah\\images\\background5.jpg", true);
+                }
+                else if (e.Key == Key.F6)
+                {
+                    File.Copy(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\Extensions\\Bah\\images\\background6.jpg", true);
+                }
+                else if (e.Key == Key.F7)
+                {
+                    File.Copy(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\Extensions\\Bah3\\images\\background5.jpg", true);
+                }
+                else if (e.Key == Key.F8)
+                {
+                    File.Copy(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\Extensions\\Bah3\\images\\background6.jpg", true);
                 }
                 else if (e.Key == Key.F9)
                 {
@@ -707,9 +745,9 @@ namespace OneDriveDaily
                     number++;
                 }
 
-                if (number > 6)
+                if (number > 4)
                     number = 0;
-                if (number2 > 6)
+                if (number2 > 4)
                     number2 = 0;
 
 
