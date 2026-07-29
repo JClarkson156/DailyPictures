@@ -49,6 +49,7 @@
                             <TextBlock Foreground="{Binding Foreground}" FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Size}"/>
                         </StackPanel>
                         <TextBlock Foreground="{Binding Foreground}" FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding Date}"/>
+                        <TextBlock Foreground="{Binding Foreground}" FontWeight="{Binding Weight}" HorizontalAlignment="Center" MaxWidth="300" TextWrapping="WrapWithOverflow" Text="{Binding ImageCounts}"/>
                     </StackPanel>
                 </DataTemplate>
             </ListView.ItemTemplate>

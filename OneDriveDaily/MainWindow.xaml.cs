@@ -48,6 +48,8 @@ namespace OneDriveDaily
             }
             catch { }
             Foreground = foreground;
+            ImageCounts = uri.FileName.Count > 1 ? "Duplicates = " + uri.FileName.Count : "";
+            files = uri.FileName;
         }
 
         public string ImageUri { get; set; }
@@ -57,6 +59,9 @@ namespace OneDriveDaily
         public string Resolution { get; set; }
 
         public string Size { get; set; }
+        public string ImageCounts { get; set; }
+
+        public List<string> files { get; set; }
 
         public object Image { get; set; }
         /*{
@@ -100,6 +105,7 @@ namespace OneDriveDaily
         public string Resolution { get; set; } = "";
         public long Size { get; set; } = 0;
         public DateTime Date { get; set; }
+        public List<string> FileName { get; set; }
         public string DateType { get; set; }
         public bool CopiedImage { get; set; } = false;
     }
@@ -248,13 +254,22 @@ namespace OneDriveDaily
             new DateTime(2023,6,3),
             new DateTime(2023,12,14),
             new DateTime(2025,06,25),
+            //new DateTime(2026,07,26),
+            new DateTime(2025,07,26),
         } ;
         private List<DateTime> datesToIgnoreAcesss = new List<DateTime>() 
         { 
             new DateTime(2025,10,21),
             new DateTime(2025,10,22),
-
+            new DateTime(2026,07,26)
         };
+
+        Dictionary<string, List<string>> ImageCounts = new Dictionary<string, List<string>>();
+
+
+        string RegexRed = "[(][0-9]+[)]|_[0-9]{3}\\.";
+
+        Regex RegexTwitter = new Regex("^[0-9]{8}_[0-9]{6}.");
 
         private async Task ChooseFiles()
         {
@@ -277,7 +292,7 @@ namespace OneDriveDaily
                 return;
             }
 
-
+            ImageCounts.Clear();
             var arrFolders = _strFolders.Split(',');
             foreach (var item in arrFolders)
             {
@@ -286,6 +301,11 @@ namespace OneDriveDaily
 
             m_arrFiles = new ObservableCollection<TestyTest>();
             arrFiles = arrFiles.OrderBy(c => System.IO.Path.GetFileNameWithoutExtension(c.Name), new MyComparer()).ToList();
+
+            var test = arrFiles.GroupBy(x => new { x.Date.Date, x.DateType }).Select(group => new { group.Key, ProductCount = group.Count() }).OrderByDescending(x => x.ProductCount).ToList();//.Select(x => x.Count);
+
+            //var test2 = arrFiles.Where(x => x.Date.Year == 2026 && x.Date.Month == 7 && x.Date.Day == 29 && x.DateType == "Edited");
+
 
             var nowString = DateTime.Today.ToString("yyyy-M");
 
@@ -314,7 +334,7 @@ namespace OneDriveDaily
             var counter = 0;
             foreach (var item in arrFiles)
             {
-                var img = new TestyTest(item, FontWeights.Normal, Regex.Match(item.Name, "[(][0-9]+[)]").Success ? _red : _black);
+                var img = new TestyTest(item, FontWeights.Normal, Regex.Match(item.Name, RegexRed).Success ? _red : _black);
                 //_ = Task.Run(async() => 
                 //{ 
                     await LoadImage(img); 
@@ -405,6 +425,8 @@ namespace OneDriveDaily
             }
         }
 
+        Regex rex = new Regex(@"\\\\[0-9]{4}\\\\[0-9]{1,2}");
+
         private List<TestyTest2> CountFiles(FileSystemInfo[] infos)
         {
             List<TestyTest2> files = new List<TestyTest2>();
@@ -430,45 +452,73 @@ namespace OneDriveDaily
 
                         if (CheckDate(startDate, endDate, dateEdited, (infos[i] as FileInfo).Attributes, false))
                         {
-                            var copiedImage = false;
-                            if (!infos[i].FullName.Contains("PhoneFav") && !infos[i].FullName.Contains("MoveToPhone") && (infos[i] as FileInfo).Name.StartsWith("a") && !Regex.Match(((infos[i] as FileInfo).Name), "[(][0-9]+[)]").Success)
-                                copiedImage = true;
-                            //infos[i].LastAccessTime = DateTime.Now;
-                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateEdited, DateType = "Edited", CopiedImage = copiedImage });
+                            CheckName(ref infos, ref files, dateEdited, i, dateEdited, "Edited");
                         }
                         else if (CheckDate(startDate, endDate, dateCreated, (infos[i] as FileInfo).Attributes, false))
                         {
-                            var copiedImage = false;
-                            if (datesToIgnore.Contains(dateCreated.Date))
-                                continue;
-                            if (!infos[i].FullName.Contains("PhoneFav") && !infos[i].FullName.Contains("MoveToPhone") && (infos[i] as FileInfo).Name.StartsWith("a") && !Regex.Match(((infos[i] as FileInfo).Name), "[(][0-9]+[)]").Success)
-                                copiedImage = true;
-                            //infos[i].LastAccessTime = DateTime.Now;
-                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateCreated, DateType = "Created", CopiedImage = copiedImage });
+                            CheckName(ref infos, ref files, dateCreated, i, dateCreated, "Created");
                         }
                         else if (CheckDate(startDate, endDate, dateAccessed, (infos[i] as FileInfo).Attributes, true))
                         {
-                            var copiedImage = false;
-                            if (!infos[i].FullName.Contains("PhoneFav") && !infos[i].FullName.Contains("MoveToPhone") && infos[i].FullName.Contains("Unsorted") && (infos[i] as FileInfo).Name.StartsWith("a"))
-                                copiedImage = true;
-                            //infos[i].LastAccessTime = DateTime.Now;
-                            files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateAccessed, DateType = "Accessed", CopiedImage = copiedImage  });
+                            CheckName(ref infos, ref files, null, i, dateAccessed, "Accessed");
                         }
 
                         if (startDate.Month == 2 && startDate.Day == 29)
                         {
                             startDate = startDate.AddDays(1);
                             if (startDate.Day == dateCreated.Day && startDate.Month == dateCreated.Month)
-                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateCreated, DateType = "Created" });
+                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, FileName = new List<string> { infos[i].Name }, Date = dateCreated, DateType = "Created" });
                             else if (startDate.Day == dateEdited.Day && startDate.Month == dateEdited.Month)
-                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateEdited, DateType = "Edited" });
+                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, FileName = new List<string> { infos[i].Name }, Date = dateEdited, DateType = "Edited" });
                             else if (startDate.Day == dateAccessed.Day && startDate.Month == dateAccessed.Month)
-                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = dateAccessed, DateType = "Accessed" });
+                                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, FileName = new List<string> { infos[i].Name }, Date = dateAccessed, DateType = "Accessed" });
                         }
                     }
                 }
             }
             return files;
+        }
+
+        private void CheckName(ref FileSystemInfo[] infos, ref List<TestyTest2> files, DateTime? dateEditedCreated, int i, DateTime fileDate, string DateType)
+        {
+            var thisMonth = false;
+            var nameA = false;
+
+            if (dateEditedCreated.HasValue && datesToIgnore.Contains(dateEditedCreated.Value.Date))
+                thisMonth = true;
+
+            var name = infos[i].Name;
+
+            if (CheckFolder(infos[i].FullName))
+                thisMonth = true;
+
+            if (DateType == "Accessed" && _prevDate < fileDate)
+                thisMonth = true;
+
+            //if (dateEditedCreated.HasValue && RegexTwitter.IsMatch(name))
+            //{
+
+            //}
+
+            if (name.StartsWith("a", StringComparison.Ordinal))
+            {
+                nameA = true;
+                name = name.Substring(1);
+            }
+
+            if (ImageCounts.ContainsKey(name))
+            {
+                nameA = true;
+                ImageCounts[name].Add(infos[i].FullName);
+            }
+            else
+            {
+                nameA = false;
+                ImageCounts.Add(name, new List<string> { infos[i].FullName });
+            }
+
+            if (!nameA)
+                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = fileDate, FileName = ImageCounts[name], DateType = DateType, CopiedImage = thisMonth });
         }
 
         private bool CheckFolder(string folder)
@@ -547,7 +597,7 @@ namespace OneDriveDaily
                             key2 = key2.Substring(6);
 
                         var fileInfo = new FileInfo(item.ImageUri);
-                        var newFileName = fileInfo.Directory + "\\" + Regex.Replace(Path.GetFileNameWithoutExtension(item.ImageUri), @"\s*\([0-9]+\)", "") + key2 + fileInfo.Extension;
+                        var newFileName = fileInfo.Directory + "\\" + Regex.Replace(Path.GetFileNameWithoutExtension(item.ImageUri), @"\s*\([0-9]+\)|_[0-9]{3}$", "") + key2 + fileInfo.Extension;
 
                         if (!File.Exists(newFileName))
                         {
@@ -556,7 +606,7 @@ namespace OneDriveDaily
                             var newItem = m_arrFiles2[(int)(m_curPage0 * maxAmount) + index];
                             newItem.Name = newFileName;
 
-                            var newItem2 = new TestyTest(newItem, FontWeights.Normal, Regex.Match(newItem.Name, "[(][0-9]+[)]").Success ? _red : _black);
+                            var newItem2 = new TestyTest(newItem, FontWeights.Normal, Regex.Match(newItem.Name, RegexRed).Success ? _red : _black);
                             await LoadImage(newItem2);
                             m_arrFiles[index] = newItem2;
                         }
@@ -569,17 +619,21 @@ namespace OneDriveDaily
 
                         OnPropertyChanged(nameof(m_arrFiles));
                         OnPropertyChanged(nameof(m_arrPages));
+
+                        item = index < m_arrFiles.Count ? m_arrFiles[index] : m_arrFiles[m_arrFiles.Count - 1];
+                        name = item.ImageUri;
+                        this.Test.SelectedItem = item;
+                        item2 = index < m_arrFiles.Count ? this.m_arrFiles[index].ImageUri : m_arrFiles[m_arrFiles.Count - 1].ImageUri;
                     }
                 }
                 else if (e.Key == Key.Delete)
                 {
                     var temp = item.ImageUri;
-
                     m_arrFiles.Remove(item);
                     m_arrFiles2.RemoveAt(m_arrFiles2.FindIndex(m_curPage0 * (int)maxAmount, r => r.Name == item.ImageUri));
                     if (m_arrFiles2.Count >= (m_curPage0 * (int)maxAmount) + (int)maxAmount)
                     {
-                        var img = new TestyTest(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1], FontWeights.Bold, Regex.Match(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1].Name, "[(][0-9]+[)]").Success ? _red : _black);
+                        var img = new TestyTest(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1], FontWeights.Bold, Regex.Match(m_arrFiles2[(m_curPage0 * (int)maxAmount) + (int)maxAmount - 1].Name, RegexRed).Success ? _red : _black);
                         //_ = Task.Run(async() => 
                         //{ 
                         await LoadImage(img);
@@ -604,10 +658,13 @@ namespace OneDriveDaily
                     OnPropertyChanged(nameof(m_nDeletedTotal));
                     OnPropertyChanged(nameof(m_totalPages));
 
+                    foreach (var file in item.files)
+                    {
 #if DEBUG
 #else
-                    Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(temp, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+                            Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(file, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
 #endif
+                    }
 
                     item = index < m_arrFiles.Count ? m_arrFiles[index] : m_arrFiles[m_arrFiles.Count - 1];
                     name = item.ImageUri;
@@ -789,7 +846,7 @@ namespace OneDriveDaily
                     item = null;
                     try
                     {
-                        var tempItem = new TestyTest(m_arrFiles2[i], FontWeights.Normal, Regex.Match(m_arrFiles2[i].Name, "[(][0-9]+[)]").Success ? _red : _black);
+                        var tempItem = new TestyTest(m_arrFiles2[i], FontWeights.Normal, Regex.Match(m_arrFiles2[i].Name, RegexRed).Success ? _red : _black);
                         //_ = Task.Run(async () =>
                         //{
                             await LoadImage(tempItem);
@@ -838,7 +895,7 @@ namespace OneDriveDaily
                     item = null;
                     try
                     {
-                        var tempItem = new TestyTest(m_arrFiles2[i], FontWeights.Normal, Regex.Match(m_arrFiles2[i].Name, "[(][0-9]+[)]").Success ? _red : _black);
+                        var tempItem = new TestyTest(m_arrFiles2[i], FontWeights.Normal, Regex.Match(m_arrFiles2[i].Name, RegexRed).Success ? _red : _black);
                         tempItem.count = counter;
                         //_ = Task.Run(async () => 
                         //{ 
@@ -897,6 +954,7 @@ namespace OneDriveDaily
 
             var arrFolders = _strFolders.Split(',');
             var arrFiles = new List<TestyTest2>();
+            ImageCounts.Clear();
 
             foreach (var item in arrFolders)
             {
@@ -956,7 +1014,7 @@ namespace OneDriveDaily
                 item = null;
                 try
                 {
-                    var tempItem = new TestyTest(m_arrFiles2[i], FontWeights.Normal, Regex.Match(m_arrFiles2[i].Name, "[(][0-9]+[)]").Success ? _red : _black);
+                    var tempItem = new TestyTest(m_arrFiles2[i], FontWeights.Normal, Regex.Match(m_arrFiles2[i].Name, RegexRed).Success ? _red : _black);
                     //_ = Task.Run(async() =>
                     //{
                         await LoadImage(tempItem);
