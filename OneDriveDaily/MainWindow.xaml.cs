@@ -249,6 +249,8 @@ namespace OneDriveDaily
         private SolidColorBrush _black = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0,0,0));
         private SolidColorBrush _red = new SolidColorBrush(System.Windows.Media.Color.FromRgb(255,0,0));
         private bool _mainSelected = true;
+        private bool _oldSelected = false;
+        private bool _monthSelected = false;
         private List<DateTime> datesToIgnore = new List<DateTime>() 
         { 
             new DateTime(2023,6,3),
@@ -302,28 +304,34 @@ namespace OneDriveDaily
             m_arrFiles = new ObservableCollection<TestyTest>();
             arrFiles = arrFiles.OrderBy(c => System.IO.Path.GetFileNameWithoutExtension(c.Name), new MyComparer()).ToList();
 
-            var test = arrFiles.GroupBy(x => new { x.Date.Date, x.DateType }).Select(group => new { group.Key, ProductCount = group.Count() }).OrderByDescending(x => x.ProductCount).ToList();//.Select(x => x.Count);
+            //var test = arrFiles.GroupBy(x => new { x.Date.Date, x.DateType }).Select(group => new { group.Key, ProductCount = group.Count() }).OrderByDescending(x => x.ProductCount).ToList();//.Select(x => x.Count);
 
-            //var test2 = arrFiles.Where(x => x.Date.Year == 2026 && x.Date.Month == 7 && x.Date.Day == 29 && x.DateType == "Edited");
+            //var test2 = arrFiles.Where(x => x.Date.Year == 2026 && x.Date.Month == 8 && x.Date.Day == 1 && x.DateType == "Accessed");
 
+            var _5years = DateTime.Today.AddYears(-5);
 
             var nowString = DateTime.Today.ToString("yyyy-M");
 
             if (_mainSelected)
             {
-                arrFiles = arrFiles.Where(x => 
-                    !x.Name.Contains($"\\{nowString}\\") && 
+                arrFiles = arrFiles.Where(x =>
+                    !x.Name.Contains($"\\{nowString}\\") &&
                     !(x.DateType == "Accessed" && datesToIgnoreAcesss.Contains(x.Date.Date)) &&
-                    !(x.CopiedImage)
+                    !(x.CopiedImage) &&
+                    x.Date > _5years                  
                 ).ToList();
             }
-            else
+            else if (_monthSelected)
             {
-                arrFiles = arrFiles.Where(x => 
-                    x.Name.Contains($"\\{nowString}\\") || 
+                arrFiles = arrFiles.Where(x =>
+                    x.Name.Contains($"\\{nowString}\\") ||
                     (x.DateType == "Accessed" && datesToIgnoreAcesss.Contains(x.Date.Date)) ||
-                    (x.CopiedImage)                    
+                    (x.CopiedImage)
                 ).ToList();
+            }
+            else //Old Selected
+            {
+                arrFiles = arrFiles.Where(x => x.Date < _5years).ToList();
             }
 
             m_arrFiles2 = arrFiles;
@@ -492,7 +500,7 @@ namespace OneDriveDaily
             if (CheckFolder(infos[i].FullName))
                 thisMonth = true;
 
-            if (DateType == "Accessed" && _prevDate < fileDate)
+            if (DateType == "Accessed" && fileDate < _prevDate)
                 thisMonth = true;
 
             //if (dateEditedCreated.HasValue && RegexTwitter.IsMatch(name))
@@ -644,7 +652,8 @@ namespace OneDriveDaily
                     }
                     else
                     {
-                        SaveData();
+                        if (_mainSelected)
+                            SaveData();
                     }
                     m_arrPages = (int)Math.Ceiling(m_arrFiles2.Count / maxAmount);
                     m_totalPages = m_arrFiles2.Count;
@@ -964,22 +973,28 @@ namespace OneDriveDaily
             arrFiles = arrFiles.OrderBy(c => System.IO.Path.GetFileNameWithoutExtension(c.Name), new MyComparer()).ToList();
 
             var nowString = DateTime.Today.ToString("yyyy-M");
+            var _5years = DateTime.Today.AddYears(-5);
 
             if (_mainSelected)
             {
                 arrFiles = arrFiles.Where(x =>
                     !x.Name.Contains($"\\{nowString}\\") &&
                     !(x.DateType == "Accessed" && datesToIgnoreAcesss.Contains(x.Date.Date)) &&
-                    !(x.CopiedImage)
+                    !(x.CopiedImage) &&
+                    x.Date > _5years
                 ).ToList();
             }
-            else
+            else if (_monthSelected)
             {
                 arrFiles = arrFiles.Where(x =>
                     x.Name.Contains($"\\{nowString}\\") ||
                     (x.DateType == "Accessed" && datesToIgnoreAcesss.Contains(x.Date.Date)) ||
                     (x.CopiedImage)
                 ).ToList();
+            }
+            else //Old Selected
+            {
+                arrFiles = arrFiles.Where(x => x.Date < _5years).ToList();
             }
 
             for (var i = 0; i< arrFiles.Count;)
@@ -1045,6 +1060,8 @@ namespace OneDriveDaily
             if (_mainSelected) return;
 
             _mainSelected = true;
+            _oldSelected = false;
+            _monthSelected = false;
 
             m_arrPages = 1;
             m_totalPages = 1;
@@ -1064,9 +1081,11 @@ namespace OneDriveDaily
 
         private void Border_MouseDown_1(object sender, MouseButtonEventArgs e)
         {
-            if (!_mainSelected) return;
+            if (_monthSelected) return;
 
             _mainSelected = false;
+            _oldSelected = false;
+            _monthSelected = true;
 
             m_arrPages = 1;
             m_totalPages = 1;
@@ -1109,6 +1128,30 @@ namespace OneDriveDaily
                 File.SetLastWriteTime(newName, dateEdited);
                 File.SetLastAccessTime(newName, dateAccessed);
             }
+        }
+
+        private void Border_MouseDown_2(object sender, MouseButtonEventArgs e)
+        {
+            if (_oldSelected) return;
+
+            _mainSelected = false;
+            _monthSelected = false;
+            _oldSelected = true;
+
+            m_arrPages = 1;
+            m_totalPages = 1;
+            m_curPage = 1;
+            m_curPage0 = 0;
+            m_nDeletedCurPage = 0;
+            m_nDeletedTotal = 0;
+
+            ChooseFiles();
+
+            OnPropertyChanged(nameof(m_arrFiles));
+            OnPropertyChanged(nameof(m_arrPages));
+            OnPropertyChanged(nameof(m_nDeletedCurPage));
+            OnPropertyChanged(nameof(m_nDeletedTotal));
+            OnPropertyChanged(nameof(m_totalPages));
         }
     }
 }

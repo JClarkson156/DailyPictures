@@ -23,7 +23,11 @@
             <Border BorderThickness="1" BorderBrush="Black" Margin="10" Cursor="Hand" MouseDown="Border_MouseDown_1">
                 <TextBlock Margin="5" Text="This Month"/>
             </Border>
-            
+
+            <Border BorderThickness="1" BorderBrush="Black" Margin="10" Cursor="Hand" MouseDown="Border_MouseDown_2">
+                <TextBlock Margin="5" Text="Older"/>
+            </Border>
+
         </StackPanel>
 
         <ListView ScrollViewer.CanContentScroll="True" Background="#8768B4" Grid.Row="1" ItemsSource="{Binding m_arrFiles, UpdateSourceTrigger=PropertyChanged}" PreviewKeyDown="Image_KeyDown" Name="Test">
