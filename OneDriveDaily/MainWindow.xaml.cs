@@ -251,14 +251,19 @@ namespace OneDriveDaily
         private bool _mainSelected = true;
         private bool _oldSelected = false;
         private bool _monthSelected = false;
-        private List<DateTime> datesToIgnore = new List<DateTime>() 
+        private List<DateTime> datesToIgnoreCreated = new List<DateTime>() 
         { 
             new DateTime(2023,6,3),
             new DateTime(2023,12,14),
             new DateTime(2025,06,25),
-            //new DateTime(2026,07,26),
             new DateTime(2025,07,26),
+            new DateTime(2025,09,12),
+            new DateTime(2025,09,16),
         } ;
+        private List<DateTime> datesToIgnoreEdited = new List<DateTime>()
+        {
+
+        };
         private List<DateTime> datesToIgnoreAcesss = new List<DateTime>() 
         { 
             new DateTime(2025,10,21),
@@ -272,6 +277,8 @@ namespace OneDriveDaily
         string RegexRed = "[(][0-9]+[)]|_[0-9]{3}\\.";
 
         Regex RegexTwitter = new Regex("^[0-9]{8}_[0-9]{6}.");
+
+        private DateTime _5years = DateTime.Today.AddYears(-5);
 
         private async Task ChooseFiles()
         {
@@ -304,11 +311,9 @@ namespace OneDriveDaily
             m_arrFiles = new ObservableCollection<TestyTest>();
             arrFiles = arrFiles.OrderBy(c => System.IO.Path.GetFileNameWithoutExtension(c.Name), new MyComparer()).ToList();
 
-            //var test = arrFiles.GroupBy(x => new { x.Date.Date, x.DateType }).Select(group => new { group.Key, ProductCount = group.Count() }).OrderByDescending(x => x.ProductCount).ToList();//.Select(x => x.Count);
+            var test = arrFiles.GroupBy(x => new { x.Date.Date, x.DateType }).Select(group => new { group.Key, ProductCount = group.Count() }).OrderByDescending(x => x.ProductCount).ToList();//.Select(x => x.Count);
 
-            //var test2 = arrFiles.Where(x => x.Date.Year == 2026 && x.Date.Month == 8 && x.Date.Day == 1 && x.DateType == "Accessed");
-
-            var _5years = DateTime.Today.AddYears(-5);
+            var test2 = arrFiles.Where(x => x.Date.Year == 2025 && x.Date.Month == 9 && x.Date.Day == 16 && x.DateType == "Created");
 
             var nowString = DateTime.Today.ToString("yyyy-M");
 
@@ -460,15 +465,21 @@ namespace OneDriveDaily
 
                         if (CheckDate(startDate, endDate, dateEdited, (infos[i] as FileInfo).Attributes, false))
                         {
-                            CheckName(ref infos, ref files, dateEdited, i, dateEdited, "Edited");
+                            CheckName(ref infos, ref files, dateEdited, i, dateEdited, "Edited", dateEdited < _5years);
                         }
                         else if (CheckDate(startDate, endDate, dateCreated, (infos[i] as FileInfo).Attributes, false))
                         {
-                            CheckName(ref infos, ref files, dateCreated, i, dateCreated, "Created");
+                            if(dateEdited < DateTime.Today.AddYears(-5))
+                                CheckName(ref infos, ref files, dateEdited, i, dateEdited, "Created", true);
+                            else
+                                CheckName(ref infos, ref files, dateCreated, i, dateCreated, "Created", false);
                         }
                         else if (CheckDate(startDate, endDate, dateAccessed, (infos[i] as FileInfo).Attributes, true))
                         {
-                            CheckName(ref infos, ref files, null, i, dateAccessed, "Accessed");
+                            if (dateEdited < DateTime.Today.AddYears(-5))
+                                CheckName(ref infos, ref files, dateEdited, i, dateEdited, "Accessed", true);
+                            else
+                                CheckName(ref infos, ref files, null, i, dateAccessed, "Accessed", false);
                         }
 
                         if (startDate.Month == 2 && startDate.Day == 29)
@@ -487,12 +498,14 @@ namespace OneDriveDaily
             return files;
         }
 
-        private void CheckName(ref FileSystemInfo[] infos, ref List<TestyTest2> files, DateTime? dateEditedCreated, int i, DateTime fileDate, string DateType)
+        private void CheckName(ref FileSystemInfo[] infos, ref List<TestyTest2> files, DateTime? dateEditedCreated, int i, DateTime fileDate, string DateType, bool isOld)
         {
             var thisMonth = false;
             var nameA = false;
 
-            if (dateEditedCreated.HasValue && datesToIgnore.Contains(dateEditedCreated.Value.Date))
+            if (dateEditedCreated.HasValue && DateType == "Created" && datesToIgnoreCreated.Contains(dateEditedCreated.Value.Date))
+                thisMonth = true;
+            if (dateEditedCreated.HasValue && DateType == "Edited" && datesToIgnoreEdited.Contains(dateEditedCreated.Value.Date))
                 thisMonth = true;
 
             var name = infos[i].Name;
@@ -501,7 +514,8 @@ namespace OneDriveDaily
                 thisMonth = true;
 
             if (DateType == "Accessed" && fileDate < _prevDate)
-                thisMonth = true;
+                return;
+                //thisMonth = true;
 
             //if (dateEditedCreated.HasValue && RegexTwitter.IsMatch(name))
             //{
@@ -523,6 +537,12 @@ namespace OneDriveDaily
             {
                 nameA = false;
                 ImageCounts.Add(name, new List<string> { infos[i].FullName });
+            }
+            if(isOld)
+            {
+                files.Add(new TestyTest2() { Name = infos[i].FullName, Size = (infos[i] as FileInfo).Length / 1024, Date = fileDate, 
+                    FileName = new List<string> { infos[i].FullName }, DateType = DateType, CopiedImage = thisMonth });
+                return;
             }
 
             if (!nameA)
@@ -790,17 +810,30 @@ namespace OneDriveDaily
                 {
                     var fileInfo = new FileInfo(item.ImageUri);
 
+                    var fileNameExtra = item.files.Where(x => !(new FileInfo(x)).Name.StartsWith("a")).FirstOrDefault();
+
                     //Will remove date metadata. But program doesn't check that so I don't think it matters so much.
                     //System.Drawing.Image image = System.Drawing.Image.FromFile(item.ImageUri);
                     //image.Save($"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\a{fileInfo.Name}", image.RawFormat);
 
-                    if ((fileInfo.FullName.Contains("Unsorted") || fileInfo.FullName.Contains("camera roll") || fileInfo.Name.StartsWith("a")) && !fileInfo.FullName.Contains("PhoneFav")) { }
+                    if ((fileInfo.FullName.Contains("Unsorted") || fileInfo.FullName.Contains("camera roll") || (fileInfo.Name.StartsWith("a") || (fileInfo.Name.StartsWith("a") && fileNameExtra != null))) && !fileInfo.FullName.Contains("PhoneFav")) { }
                     else
                     {
-                        File.Copy(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\a" + fileInfo.Name, true);
-                        var newFileInfo = new FileInfo($"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\a" + fileInfo.Name);
-                        newFileInfo.CreationTime = DateTime.Now;
-                        newFileInfo.LastWriteTime = DateTime.Now;
+                        if (fileInfo.Name.StartsWith("a") && fileNameExtra != null)
+                        {
+                            var fileInfoExtra = new FileInfo(fileNameExtra);
+                            File.Copy(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\a" + fileInfoExtra.Name, true);
+                            var newFileInfo = new FileInfo($"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\a" + fileInfoExtra.Name);
+                            newFileInfo.CreationTime = fileInfoExtra.CreationTime;
+                            newFileInfo.LastWriteTime = DateTime.Now;
+                        }
+                        else
+                        {
+                            File.Copy(item.ImageUri, $"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\a" + fileInfo.Name, true);
+                            var newFileInfo = new FileInfo($"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\a" + fileInfo.Name);
+                            newFileInfo.CreationTime = fileInfo.CreationTime;
+                            newFileInfo.LastWriteTime = DateTime.Now;
+                        }
                     }
                 }
                 else if (e.Key == Key.F4)
