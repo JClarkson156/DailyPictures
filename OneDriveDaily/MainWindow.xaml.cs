@@ -816,7 +816,20 @@ namespace OneDriveDaily
                     //System.Drawing.Image image = System.Drawing.Image.FromFile(item.ImageUri);
                     //image.Save($"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\a{fileInfo.Name}", image.RawFormat);
 
-                    if ((fileInfo.FullName.Contains("Unsorted") || fileInfo.FullName.Contains("camera roll") || (fileInfo.Name.StartsWith("a") || (fileInfo.Name.StartsWith("a") && fileNameExtra != null))) && !fileInfo.FullName.Contains("PhoneFav")) { }
+                    if (
+                        (
+                            (
+                                !fileInfo.Name.StartsWith("a") && 
+                                (
+                                    fileInfo.FullName.Contains("Unsorted") ||
+                                    fileInfo.FullName.Contains("camera roll")
+                                )
+                            ) ||
+                            (fileInfo.Name.StartsWith("a") && fileNameExtra == null)
+                        )
+                        && 
+                        !fileInfo.FullName.Contains("PhoneFav")
+                    ) { }
                     else
                     {
                         if (fileInfo.Name.StartsWith("a") && fileNameExtra != null)
